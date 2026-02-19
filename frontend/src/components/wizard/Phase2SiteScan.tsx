@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Scan, CheckCircle, ArrowRight, RotateCcw, Eye, ChevronDown, ChevronUp, Edit2, X, MousePointerClick, FileText, Link, Video } from 'lucide-react';
 import { useStore } from '../../store';
 import type { ScannedElement, ScanResults } from '../../types';
-import { mockScanResult } from '../../data/mockData';
 
 interface Props {
   projectId: string;
@@ -158,25 +157,44 @@ export default function Phase2SiteScan({ projectId, onNext, onBack, website }: P
   const { saveScanResults } = useStore();
   const [scanning, setScanning] = useState(false);
   const [scanDone, setScanDone] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanMethod, setScanMethod] = useState<'browser' | 'http' | null>(null);
   const [results, setResults] = useState<ScanResults | null>(null);
   const [elements, setElements] = useState<{ high: ScannedElement[]; medium: ScannedElement[]; low: ScannedElement[] }>({ high: [], medium: [], low: [] });
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ high: true, medium: true, low: false });
 
-  const startScan = () => {
+  const startScan = async () => {
     setScanning(true);
     setScanDone(false);
-    // Simulate scan with mock data
-    setTimeout(() => {
-      const scan = { ...mockScanResult, url: website || 'https://example.com', scanDate: new Date().toISOString() };
+    setScanError(null);
+    try {
+      const response = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: website || 'https://example.com' }),
+        signal: AbortSignal.timeout(38000),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.message || json.error || 'Scan failed');
+      }
+      const scan: ScanResults & { scanMethod?: 'browser' | 'http' } = json.data;
+      setScanMethod((scan as any).scanMethod ?? null);
       setResults(scan);
       setElements({
         high: scan.elements.highPriority.map((el) => ({ ...el, selected: true })),
         medium: scan.elements.mediumPriority.map((el) => ({ ...el, selected: false })),
         low: scan.elements.lowPriority.map((el) => ({ ...el, selected: false })),
       });
-      setScanning(false);
       setScanDone(true);
-    }, 4500);
+    } catch (err: any) {
+      const msg = err.name === 'TimeoutError'
+        ? 'Scan timed out. The site may be slow or blocking automated access.'
+        : err.message || 'Unknown error during scan.';
+      setScanError(msg);
+    } finally {
+      setScanning(false);
+    }
   };
 
   const toggleElement = (id: string) => {
@@ -262,11 +280,20 @@ export default function Phase2SiteScan({ projectId, onNext, onBack, website }: P
 
       {!scanning && !scanDone && (
         <div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(11,191,170,0.08)', border: '1px solid #1A1E28', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-            <Scan size={36} color="#7A8599" />
+          {scanError && (
+            <div style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'left', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+              <X size={16} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <div style={{ fontWeight: 600, color: '#ef4444', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Scan Failed</div>
+                <div style={{ color: '#7A8599', fontSize: '0.8125rem' }}>{scanError}</div>
+              </div>
+            </div>
+          )}
+          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: scanError ? 'rgba(239,68,68,0.08)' : 'rgba(11,191,170,0.08)', border: `1px solid ${scanError ? 'rgba(239,68,68,0.3)' : '#1A1E28'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <Scan size={36} color={scanError ? '#ef4444' : '#7A8599'} />
           </div>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#E8ECF2', margin: 0, marginBottom: '0.5rem' }}>
-            Ready to Scan
+            {scanError ? 'Retry Scan' : 'Ready to Scan'}
           </h3>
           <p style={{ color: '#7A8599', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
             Target: <span style={{ color: '#0BBFAA', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.85rem' }}>{website || 'No URL provided'}</span>
@@ -318,6 +345,14 @@ export default function Phase2SiteScan({ projectId, onNext, onBack, website }: P
                     ))}
                   </div>
                 </div>
+                {scanMethod && (
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#7A8599', marginBottom: '0.25rem' }}>SCAN METHOD</div>
+                    <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '4px', backgroundColor: scanMethod === 'browser' ? 'rgba(129,140,248,0.1)' : 'rgba(251,146,60,0.1)', color: scanMethod === 'browser' ? '#818cf8' : '#fb923c', border: `1px solid ${scanMethod === 'browser' ? 'rgba(129,140,248,0.25)' : 'rgba(251,146,60,0.25)'}` }}>
+                      {scanMethod === 'browser' ? 'Browser (Puppeteer)' : 'HTTP (Fallback)'}
+                    </span>
+                  </div>
+                )}
               </div>
               <button onClick={startScan} style={{ background: 'transparent', border: '1px solid #1A1E28', borderRadius: '8px', color: '#7A8599', padding: '0.5rem 0.875rem', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                 <RotateCcw size={13} /> Re-scan
