@@ -3,6 +3,7 @@ import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Phase1Discovery } from './components/wizard/Phase1Discovery';
 import { Phase2JourneyDesigner } from './components/wizard/Phase2JourneyDesigner';
+import { Phase3ConversionOrchestration } from './components/wizard/Phase3ConversionOrchestration';
 
 function App() {
   return (
@@ -12,7 +13,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/discovery" element={<Phase1Discovery />} />
           <Route path="/journey" element={<Phase2JourneyDesigner />} />
-          <Route path="/orchestration" element={<PlaceholderPage title="Phase 3 · Conversion Orchestration" subtitle="Coming next — map events to GA4, Google Ads, and Meta with dual-tracking configuration." />} />
+          <Route path="/orchestration" element={<Phase3ConversionOrchestration />} />
           <Route path="/clients" element={<PlaceholderPage title="Clients" />} />
           <Route path="/templates" element={<PlaceholderPage title="Templates" />} />
           <Route path="/settings" element={<PlaceholderPage title="Settings" />} />

@@ -84,8 +84,50 @@ export interface Project {
   status: ProjectStatus;
   discovery?: DiscoveryData;
   journeys?: Journey[];
+  conversions?: Conversion[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+// ─── Conversion / Phase 3 ────────────────────────────────────────────────────
+
+export type TrackingMethod = 'client-only' | 'server-only' | 'both';
+export type ValueLogic = 'dynamic' | 'fixed';
+
+export interface ConversionPlatforms {
+  ga4Client: { enabled: boolean; eventName: string };
+  metaPixel: { enabled: boolean; eventName: string };
+  ga4Server: { enabled: boolean; eventName: string };
+  metaCAPI: { enabled: boolean; eventName: string };
+  googleAds: { enabled: boolean; conversionLabel: string };
+}
+
+export interface ConversionUserData {
+  email: boolean;
+  phone: boolean;
+  firstName: boolean;
+  lastName: boolean;
+  city: boolean;
+  country: boolean;
+  postalCode: boolean;
+}
+
+export interface Conversion {
+  id: string;
+  eventId: string;
+  canonicalName: string;
+  displayName: string;
+  conversionType: 'primary' | 'secondary';
+  trackingMethod: TrackingMethod;
+  valueLogic: ValueLogic;
+  fixedValue: number;
+  currency: string;
+  isRevenueEvent: boolean;
+  isPaidMediaOptimization: boolean;
+  platforms: ConversionPlatforms;
+  enableDeduplication: boolean;
+  enhancedConversionsEnabled: boolean;
+  userData: ConversionUserData;
 }
 
 // ─── UI State ─────────────────────────────────────────────────────────────────
