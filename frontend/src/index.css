@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-deep-navy: #080B12;
+  --color-atlas-teal: #0BBFAA;
+  --color-text-primary: #E8ECF2;
+  --color-text-muted: #7A8599;
+  --color-border: #1A1E28;
+  --color-card-bg: #0D1117;
+  --color-input-bg: #12161E;
+  --color-hover-bg: #1A1E28;
+
+  --font-primary: 'Bricolage Grotesque', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --spacing-sidebar: 248px;
+}
+
+body {
+  background-color: #080B12;
+  color: #E8ECF2;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #080B12;
+}
+::-webkit-scrollbar-thumb {
+  background: #1A1E28;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0BBFAA;
+}
