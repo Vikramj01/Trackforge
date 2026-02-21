@@ -95,7 +95,7 @@ export function Sidebar() {
           <p className="text-xs font-semibold text-atlas-teal" style={{ letterSpacing: '0.05em' }}>
             ATLAS v1.0
           </p>
-          <p className="text-xs text-text-muted mt-0.5">Phase 1 · Discovery</p>
+          <p className="text-xs text-text-muted mt-0.5">Phase 1–2 Active</p>
         </div>
       </div>
     </div>

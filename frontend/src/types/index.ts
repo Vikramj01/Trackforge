@@ -1,3 +1,37 @@
+// ─── Journey / Phase 2 ───────────────────────────────────────────────────────
+
+export type EventType = 'page_view' | 'user_action' | 'success' | 'error';
+export type EventCategory = 'acquisition' | 'activation' | 'revenue' | 'retention';
+export type ConversionType = 'none' | 'primary' | 'secondary';
+
+export interface EventParameter {
+  id: string;
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array';
+  required: boolean;
+}
+
+export interface JourneyEvent {
+  id: string;
+  canonicalName: string;
+  displayName: string;
+  description: string;
+  eventType: EventType;
+  route?: string;
+  category: EventCategory;
+  conversionType: ConversionType;
+  parameters: EventParameter[];
+  implementationNotes?: string;
+}
+
+export interface Journey {
+  id: string;
+  name: string;
+  description?: string;
+  templateId?: string;
+  events: JourneyEvent[];
+}
+
 // ─── Discovery / Phase 1 ────────────────────────────────────────────────────
 
 export type PropertyType = 'spa' | 'headless' | 'cms' | 'webapp';
@@ -49,6 +83,7 @@ export interface Project {
   currentPhase: ProjectPhase;
   status: ProjectStatus;
   discovery?: DiscoveryData;
+  journeys?: Journey[];
   createdAt: Date;
   updatedAt: Date;
 }

@@ -677,7 +677,7 @@ export function Phase1Discovery() {
     });
 
     setActiveProject(id);
-    navigate('/');
+    navigate('/journey');
   };
 
   const saveDraft = handleSubmit(() => {
