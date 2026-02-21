@@ -38,7 +38,7 @@ const FEATURES = [
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { projects } = useStore();
+  const { projects, setActiveProject } = useStore();
 
   return (
     <div className="p-8 max-w-7xl">
@@ -138,7 +138,10 @@ export function Dashboard() {
               <Card
                 key={project.id}
                 hover
-                onClick={() => navigate(`/discovery/${project.id}`)}
+                onClick={() => {
+                  setActiveProject(project.id);
+                  navigate(project.currentPhase >= 2 ? '/journey' : '/discovery');
+                }}
                 className="flex items-center justify-between"
               >
                 <div>
