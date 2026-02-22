@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, ArrowRight, Server, Globe, Shield, TrendingUp } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useStore } from '../store/useStore';
+import { useAuth } from '../contexts/AuthContext';
 
 const STATS = [
   { label: 'Active Projects', value: '0', change: null },
@@ -38,7 +40,12 @@ const FEATURES = [
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { projects, setActiveProject } = useStore();
+  const { projects, setActiveProject, loadProjects } = useStore();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) loadProjects(user.id);
+  }, [user, loadProjects]);
 
   return (
     <div className="p-8 max-w-7xl">
