@@ -1,21 +1,33 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
   FileText,
   Settings,
   HelpCircle,
+  CreditCard,
+  LogOut,
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard, href: '/' },
   { name: 'Clients', icon: Users, href: '/clients' },
   { name: 'Templates', icon: FileText, href: '/templates' },
+  { name: 'Billing', icon: CreditCard, href: '/billing' },
   { name: 'Settings', icon: Settings, href: '/settings' },
   { name: 'Help', icon: HelpCircle, href: '/help' },
 ];
 
 export function Sidebar() {
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate('/login');
+  }
+
   return (
     <div
       style={{ width: '248px', fontFamily: 'Inter, sans-serif' }}
@@ -83,8 +95,8 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom: version badge */}
-      <div className="p-4 border-t border-border">
+      {/* Bottom: plan badge + sign out */}
+      <div className="p-4 border-t border-border space-y-3">
         <div
           className="px-3 py-2 rounded-lg text-center"
           style={{
@@ -92,11 +104,18 @@ export function Sidebar() {
             border: '1px solid rgba(11, 191, 170, 0.15)',
           }}
         >
-          <p className="text-xs font-semibold text-atlas-teal" style={{ letterSpacing: '0.05em' }}>
-            ATLAS v1.0
+          <p className="text-xs font-semibold text-atlas-teal capitalize" style={{ letterSpacing: '0.05em' }}>
+            {profile?.plan ?? 'free'} plan
           </p>
-          <p className="text-xs text-text-muted mt-0.5">Phase 1–2 Active</p>
+          <p className="text-xs text-text-muted mt-0.5">ATLAS v1.0</p>
         </div>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-hover-bg transition-all duration-150 text-sm font-medium"
+        >
+          <LogOut size={16} />
+          Sign out
+        </button>
       </div>
     </div>
   );

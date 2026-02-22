@@ -135,8 +135,10 @@ export interface Conversion {
 export interface AppStore {
   projects: Project[];
   activeProjectId: string | null;
-  addProject: (project: Project) => void;
-  updateProject: (id: string, updates: Partial<Project>) => void;
+  loading: boolean;
+  loadProjects: (userId: string) => Promise<void>;
+  addProject: (project: Project) => Promise<void>;
+  updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
   setActiveProject: (id: string | null) => void;
   getActiveProject: () => Project | undefined;
 }
