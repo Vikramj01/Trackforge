@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ValidatorForm } from '../validator/ValidatorForm';
 import { ValidatorProgress } from '../validator/ValidatorProgress';
+import { ValidatorResults } from '../validator/ValidatorResults';
 import { useStore } from '../../store/useStore';
-import type { ValidatorInputs, ValidatorResults } from '../../types';
+import type { ValidatorInputs, ValidatorResults as ValidatorResultsType } from '../../types';
 
 // ─── Mock results (MVP — no real browser automation yet) ──────────────────────
 
-const MOCK_RESULTS: Omit<ValidatorResults, 'inputs'> = {
+const MOCK_RESULTS: Omit<ValidatorResultsType, 'inputs'> = {
   score: 45,
   criticalIssues: [
     {
@@ -60,11 +61,11 @@ const MOCK_RESULTS: Omit<ValidatorResults, 'inputs'> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-type View = 'form' | 'progress';
+type View = 'form' | 'progress' | 'results';
 
 export function Phase0Validator() {
   const navigate = useNavigate();
-  const { setValidatorResults } = useStore();
+  const { setValidatorResults, validatorResults } = useStore();
   const [view, setView] = useState<View>('form');
   const [inputs, setInputs] = useState<ValidatorInputs | null>(null);
 
@@ -75,41 +76,55 @@ export function Phase0Validator() {
 
   function handleProgressComplete() {
     setValidatorResults({ ...MOCK_RESULTS, inputs: inputs! });
+    setView('results');
+  }
+
+  function handleRunAgain() {
+    setInputs(null);
+    setView('form');
+  }
+
+  // "Fix All Issues with Atlas" → Discovery (pre-fill wired up in Session 3)
+  function handleFixAll() {
     navigate('/discovery');
   }
 
+  const headerVisible = view !== 'results';
+
   return (
     <div className="p-8 max-w-2xl">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="mb-3">
-          <span
-            className="text-xs font-semibold tracking-widest uppercase px-2.5 py-1 rounded-md"
+      {/* Header — hidden on results to give the score card more focus */}
+      {headerVisible && (
+        <div className="mb-8">
+          <div className="mb-3">
+            <span
+              className="text-xs font-semibold tracking-widest uppercase px-2.5 py-1 rounded-md"
+              style={{
+                background: 'rgba(11,191,170,0.1)',
+                color: '#0BBFAA',
+                border: '1px solid rgba(11,191,170,0.2)',
+              }}
+            >
+              Phase 0
+            </span>
+          </div>
+          <h1
             style={{
-              background: 'rgba(11,191,170,0.1)',
-              color: '#0BBFAA',
-              border: '1px solid rgba(11,191,170,0.2)',
+              fontFamily: 'Bricolage Grotesque, sans-serif',
+              fontWeight: 700,
+              fontSize: '28px',
+              letterSpacing: '-0.01em',
+              color: '#E8ECF2',
+              margin: 0,
             }}
           >
-            Phase 0
-          </span>
+            Tracking Validator
+          </h1>
+          <p className="text-text-muted text-sm mt-2">
+            Test your existing setup to detect tracking gaps before building a new architecture.
+          </p>
         </div>
-        <h1
-          style={{
-            fontFamily: 'Bricolage Grotesque, sans-serif',
-            fontWeight: 700,
-            fontSize: '28px',
-            letterSpacing: '-0.01em',
-            color: '#E8ECF2',
-            margin: 0,
-          }}
-        >
-          Tracking Validator
-        </h1>
-        <p className="text-text-muted text-sm mt-2">
-          Test your existing setup to detect tracking gaps before building a new architecture.
-        </p>
-      </div>
+      )}
 
       {view === 'form' && (
         <ValidatorForm
@@ -120,6 +135,14 @@ export function Phase0Validator() {
 
       {view === 'progress' && (
         <ValidatorProgress onComplete={handleProgressComplete} />
+      )}
+
+      {view === 'results' && validatorResults && (
+        <ValidatorResults
+          results={validatorResults}
+          onFixAll={handleFixAll}
+          onRunAgain={handleRunAgain}
+        />
       )}
     </div>
   );
