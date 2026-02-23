@@ -130,17 +130,54 @@ export interface Conversion {
   userData: ConversionUserData;
 }
 
+// ─── Validator / Phase 0 ─────────────────────────────────────────────────────
+
+export type ValidatorPlatform = 'google-ads' | 'meta-ads' | 'linkedin-ads';
+export type ConversionGoal = 'purchase' | 'lead' | 'signup' | 'add-to-cart';
+
+export interface ValidatorInputs {
+  landingUrl: string;
+  conversionUrl: string;
+  platforms: ValidatorPlatform[];
+  conversionType: ConversionGoal;
+}
+
+export interface ValidatorIssue {
+  id: string;
+  title: string;
+  impact: string;
+  cause?: string;
+  severity: 'critical' | 'warning';
+}
+
+export interface ValidatorResults {
+  score: number;
+  criticalIssues: ValidatorIssue[];
+  warnings: ValidatorIssue[];
+  passing: string[];
+  detectedSetup: {
+    hasGTM: boolean;
+    hasGA4: boolean;
+    hasMetaPixel: boolean;
+    hasGoogleAds: boolean;
+    propertyType: PropertyType;
+  };
+  inputs: ValidatorInputs;
+}
+
 // ─── UI State ─────────────────────────────────────────────────────────────────
 
 export interface AppStore {
   projects: Project[];
   activeProjectId: string | null;
   loading: boolean;
+  validatorResults: ValidatorResults | null;
   loadProjects: (userId: string) => Promise<void>;
   addProject: (project: Project) => Promise<void>;
   updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
   setActiveProject: (id: string | null) => void;
   getActiveProject: () => Project | undefined;
+  setValidatorResults: (results: ValidatorResults) => void;
 }
 
 // ─── Tech Stack Options ──────────────────────────────────────────────────────

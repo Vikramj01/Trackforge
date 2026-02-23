@@ -10,6 +10,7 @@ import { Phase1Discovery } from './components/wizard/Phase1Discovery';
 import { Phase2JourneyDesigner } from './components/wizard/Phase2JourneyDesigner';
 import { Phase3ConversionOrchestration } from './components/wizard/Phase3ConversionOrchestration';
 import { Phase4Export } from './components/wizard/Phase4Export';
+import { Phase0Validator } from './components/wizard/Phase0Validator';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/validator" element={<Phase0Validator />} />
               <Route path="/discovery" element={<Phase1Discovery />} />
               <Route path="/journey" element={<Phase2JourneyDesigner />} />
               <Route path="/orchestration" element={<Phase3ConversionOrchestration />} />
