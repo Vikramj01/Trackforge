@@ -931,15 +931,10 @@ export function Phase3ConversionOrchestration() {
     return first ? new Set([first]) : new Set();
   });
 
-  // Zustand hydration guard
-  const [hydrated, setHydrated] = useState(() => useStore.persist.hasHydrated());
+  // Redirect if no active project
   useEffect(() => {
-    if (hydrated) return;
-    return useStore.persist.onFinishHydration(() => setHydrated(true));
-  }, []);
-  useEffect(() => {
-    if (hydrated && !project) navigate('/discovery');
-  }, [hydrated, project, navigate]);
+    if (!project) navigate('/discovery');
+  }, [project, navigate]);
 
   // Derived
   const serverSideEnabled = project?.discovery?.serverSideTracking?.enabled ?? false;
@@ -974,8 +969,8 @@ export function Phase3ConversionOrchestration() {
     if (project) updateProject(project.id, { conversions });
   }
 
-  function handleContinue() {
-    if (project) updateProject(project.id, { conversions, currentPhase: 3 });
+  async function handleContinue() {
+    if (project) await updateProject(project.id, { conversions, currentPhase: 3 });
     navigate('/export');
   }
 

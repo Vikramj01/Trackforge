@@ -985,9 +985,9 @@ export function Phase4Export() {
     URL.revokeObjectURL(url);
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (project) {
-      updateProject(project.id, { currentPhase: 4, status: 'ready-to-deploy' });
+      await updateProject(project.id, { currentPhase: 4, status: 'ready-to-deploy' });
     }
     setCompleted(true);
     setTimeout(() => navigate('/'), 1200);

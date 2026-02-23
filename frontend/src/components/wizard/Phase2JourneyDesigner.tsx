@@ -894,8 +894,8 @@ export function Phase2JourneyDesigner() {
     if (project) updateProject(project.id, { journeys });
   }
 
-  function handleContinue() {
-    if (project) updateProject(project.id, { journeys, currentPhase: 2 });
+  async function handleContinue() {
+    if (project) await updateProject(project.id, { journeys, currentPhase: 2 });
     navigate('/orchestration');
   }
 
