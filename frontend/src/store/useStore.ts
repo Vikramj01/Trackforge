@@ -35,6 +35,7 @@ export const useStore = create<AppStore>()((set, get) => ({
   projects: [],
   activeProjectId: null,
   loading: false,
+  validatorResults: null,
 
   loadProjects: async (userId: string) => {
     set({ loading: true });
@@ -83,6 +84,8 @@ export const useStore = create<AppStore>()((set, get) => ({
   },
 
   setActiveProject: (id: string | null) => set({ activeProjectId: id }),
+
+  setValidatorResults: (results) => set({ validatorResults: results }),
 
   getActiveProject: () => {
     const { projects, activeProjectId } = get();

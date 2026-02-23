@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowRight, Server, Globe, Shield, TrendingUp } from 'lucide-react';
+import { ArrowRight, Server, Globe, Shield, TrendingUp, Activity, Plus } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useStore } from '../store/useStore';
@@ -68,11 +68,8 @@ export function Dashboard() {
             Design dual-tracking architectures. Capture every conversion — client and server.
           </p>
         </div>
-        <Button
-          onClick={() => navigate('/discovery')}
-          className="shrink-0"
-        >
-          <Plus size={16} />
+        <Button onClick={() => navigate('/validator')} className="shrink-0">
+          <Activity size={16} />
           New Project
         </Button>
       </div>
@@ -98,39 +95,90 @@ export function Dashboard() {
         ))}
       </div>
 
-      {/* Empty state or project list */}
+      {/* Get Started / Project list */}
       {projects.length === 0 ? (
         <div className="mb-10">
-          <Card className="border-dashed text-center py-16">
-            <div
-              className="w-14 h-14 rounded-xl mx-auto mb-5 flex items-center justify-center"
-              style={{
-                background: 'rgba(11, 191, 170, 0.1)',
-                border: '1px solid rgba(11, 191, 170, 0.2)',
-              }}
+          {/* Section heading */}
+          <h2
+            className="text-base font-semibold text-text-primary mb-4"
+            style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+          >
+            Get Started with Atlas
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Option 1: Test existing tracking */}
+            <Card
+              hover
+              onClick={() => navigate('/validator')}
+              className="cursor-pointer"
             >
-              <Plus size={24} className="text-atlas-teal" />
-            </div>
-            <h2
-              style={{
-                fontFamily: 'Bricolage Grotesque, sans-serif',
-                fontWeight: 700,
-                fontSize: '20px',
-                color: '#E8ECF2',
-                margin: 0,
-              }}
+              <div className="flex items-start gap-4">
+                <div
+                  className="p-2.5 rounded-lg shrink-0"
+                  style={{
+                    background: 'rgba(11,191,170,0.1)',
+                    border: '1px solid rgba(11,191,170,0.2)',
+                  }}
+                >
+                  <Activity size={20} style={{ color: '#0BBFAA' }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="text-sm font-semibold text-text-primary mb-1"
+                    style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+                  >
+                    Test My Existing Tracking
+                  </p>
+                  <p className="text-xs text-text-muted leading-relaxed mb-3">
+                    Run a free audit of your current setup
+                  </p>
+                  <p
+                    className="text-xs font-medium"
+                    style={{ color: 'rgba(122,133,153,0.6)' }}
+                  >
+                    Takes 60 seconds · Detects common issues
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Option 2: Start from scratch */}
+            <Card
+              hover
+              onClick={() => navigate('/discovery')}
+              className="cursor-pointer"
             >
-              No projects yet
-            </h2>
-            <p className="text-text-muted text-sm mt-2 mb-6 max-w-sm mx-auto">
-              Create your first tracking architecture. Start by defining client context and
-              enabling dual-tracking.
-            </p>
-            <Button onClick={() => navigate('/discovery')}>
-              <Plus size={16} />
-              Create First Project
-            </Button>
-          </Card>
+              <div className="flex items-start gap-4">
+                <div
+                  className="p-2.5 rounded-lg shrink-0"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid #1A1E28',
+                  }}
+                >
+                  <Plus size={20} style={{ color: '#7A8599' }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="text-sm font-semibold text-text-primary mb-1"
+                    style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+                  >
+                    Start From Scratch
+                  </p>
+                  <p className="text-xs text-text-muted leading-relaxed mb-3">
+                    Design a new tracking architecture
+                  </p>
+                  <p
+                    className="text-xs font-medium"
+                    style={{ color: 'rgba(122,133,153,0.6)' }}
+                  >
+                    Best for new websites or complete rebuild
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
       ) : (
         <div className="mb-10">
@@ -140,7 +188,7 @@ export function Dashboard() {
           >
             Recent Projects
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-3 mb-6">
             {projects.map((project) => (
               <Card
                 key={project.id}
@@ -160,6 +208,54 @@ export function Dashboard() {
                 <ArrowRight size={16} className="text-text-muted" />
               </Card>
             ))}
+          </div>
+
+          {/* New project options (compact) */}
+          <p className="text-xs font-semibold tracking-widest text-text-muted uppercase mb-3">
+            Start New Project
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Card
+              hover
+              onClick={() => navigate('/validator')}
+              className="flex items-center gap-3 cursor-pointer"
+            >
+              <div
+                className="p-2 rounded-lg shrink-0"
+                style={{
+                  background: 'rgba(11,191,170,0.1)',
+                  border: '1px solid rgba(11,191,170,0.2)',
+                }}
+              >
+                <Activity size={16} style={{ color: '#0BBFAA' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text-primary">Test Existing Tracking</p>
+                <p className="text-xs text-text-muted">Run a tracking audit first</p>
+              </div>
+              <ArrowRight size={14} className="text-text-muted shrink-0" />
+            </Card>
+
+            <Card
+              hover
+              onClick={() => navigate('/discovery')}
+              className="flex items-center gap-3 cursor-pointer"
+            >
+              <div
+                className="p-2 rounded-lg shrink-0"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid #1A1E28',
+                }}
+              >
+                <Plus size={16} style={{ color: '#7A8599' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text-primary">Start From Scratch</p>
+                <p className="text-xs text-text-muted">Design new architecture</p>
+              </div>
+              <ArrowRight size={14} className="text-text-muted shrink-0" />
+            </Card>
           </div>
         </div>
       )}
@@ -203,20 +299,15 @@ export function Dashboard() {
             </div>
 
             <div className="hidden sm:flex flex-col gap-3 flex-1 items-stretch">
-              {/* Client path */}
               <div className="flex items-center gap-2">
                 <div className="h-px flex-1" style={{ background: '#1A1E28' }} />
                 <span className="text-xs text-text-muted px-2">Client</span>
                 <div className="h-px flex-1" style={{ background: '#1A1E28' }} />
                 <span className="text-xs text-text-muted">Browser → GTM → GA4, Meta Pixel</span>
               </div>
-              {/* Server path */}
               <div className="flex items-center gap-2">
                 <div className="h-px flex-1" style={{ background: '#0BBFAA', opacity: 0.5 }} />
-                <span
-                  className="text-xs px-2 font-semibold"
-                  style={{ color: '#0BBFAA' }}
-                >
+                <span className="text-xs px-2 font-semibold" style={{ color: '#0BBFAA' }}>
                   Server
                 </span>
                 <div className="h-px flex-1" style={{ background: '#0BBFAA', opacity: 0.5 }} />
@@ -279,8 +370,9 @@ export function Dashboard() {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <Button onClick={() => navigate('/discovery')}>
-            Start Phase 1: Discovery
+          <Button variant="secondary" onClick={() => navigate('/validator')}>
+            <Activity size={16} />
+            Run Tracking Audit
             <ArrowRight size={16} />
           </Button>
         </div>
