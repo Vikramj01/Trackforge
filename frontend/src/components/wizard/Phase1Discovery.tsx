@@ -647,11 +647,11 @@ export function Phase1Discovery() {
   const propertyType = watch('propertyType');
   const techStack = watch('techStack');
 
-  const onSubmit = (data: DiscoveryFormValues) => {
+  const onSubmit = async (data: DiscoveryFormValues) => {
     const id = crypto.randomUUID();
     const now = new Date();
 
-    addProject({
+    await addProject({
       id,
       clientName: data.clientName,
       clientId: id,
