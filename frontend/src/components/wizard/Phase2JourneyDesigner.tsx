@@ -785,15 +785,10 @@ export function Phase2JourneyDesigner() {
   const [editingDraft, setEditingDraft] = useState<JourneyEvent | null>(null);
   const [showTemplateChooser, setShowTemplateChooser] = useState(false);
 
-  // Redirect if no active project — wait for Zustand persist hydration first
-  const [hydrated, setHydrated] = useState(() => useStore.persist.hasHydrated());
+  // Redirect if no active project
   useEffect(() => {
-    if (hydrated) return;
-    return useStore.persist.onFinishHydration(() => setHydrated(true));
-  }, []);
-  useEffect(() => {
-    if (hydrated && !project) navigate('/discovery');
-  }, [hydrated, project, navigate]);
+    if (!project) navigate('/discovery');
+  }, [project, navigate]);
 
   // ── Derived ───────────────────────────────────────────────────────────────────
 
