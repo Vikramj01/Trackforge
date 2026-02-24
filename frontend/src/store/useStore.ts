@@ -83,6 +83,14 @@ export const useStore = create<AppStore>()((set, get) => ({
     }));
   },
 
+  deleteProject: async (id: string) => {
+    await supabase.from('projects').delete().eq('id', id);
+    set((state) => ({
+      projects: state.projects.filter((p) => p.id !== id),
+      activeProjectId: state.activeProjectId === id ? null : state.activeProjectId,
+    }));
+  },
+
   setActiveProject: (id: string | null) => set({ activeProjectId: id }),
 
   setValidatorResults: (results) => set({ validatorResults: results }),
