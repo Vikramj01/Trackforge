@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 340px;
+      background: #080B12;
+      color: #E8ECF2;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    #app { padding: 16px; }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .header-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #0BBFAA;
+    }
+    .header-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #0BBFAA;
+    }
+    .url-line {
+      font-size: 11px;
+      color: #7A8599;
+      margin-bottom: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .score-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .score-num { font-size: 44px; font-weight: 700; line-height: 1; }
+    .score-denom { color: #7A8599; font-size: 14px; }
+    .score-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .stats { display: flex; gap: 6px; margin-bottom: 14px; }
+    .stat { flex: 1; padding: 8px; border-radius: 6px; text-align: center; }
+    .stat-num { font-size: 18px; font-weight: 700; line-height: 1.2; }
+    .stat-label { font-size: 10px; color: #7A8599; margin-top: 2px; }
+    .issue { padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; }
+    .issue-title { font-size: 12px; font-weight: 600; color: #E8ECF2; margin-bottom: 3px; }
+    .issue-impact { font-size: 11px; color: #7A8599; }
+    .passing-block {
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.18);
+    }
+    .passing-item { font-size: 11px; color: #10B981; margin-bottom: 2px; }
+    .passing-item:last-child { margin-bottom: 0; }
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #0BBFAA;
+      color: #080B12;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #14DFC8; }
+    .loading {
+      text-align: center;
+      padding: 32px 16px;
+      color: #7A8599;
+      font-size: 12px;
+    }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #1A1E28;
+      border-top-color: #0BBFAA;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { text-align: center; padding: 24px 16px; }
+    .error p { color: #7A8599; margin-bottom: 8px; font-size: 13px; }
+    .error small { font-size: 11px; color: #3A3F4E; }
+    .divider {
+      height: 1px;
+      background: #1A1E28;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="loading">
+      <div class="spinner"></div>
+      Scanning page…
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
