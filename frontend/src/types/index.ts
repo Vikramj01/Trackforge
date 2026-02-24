@@ -175,6 +175,7 @@ export interface AppStore {
   loadProjects: (userId: string) => Promise<void>;
   addProject: (project: Project) => Promise<void>;
   updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   setActiveProject: (id: string | null) => void;
   getActiveProject: () => Project | undefined;
   setValidatorResults: (results: ValidatorResults) => void;

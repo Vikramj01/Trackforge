@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Server, Globe, Shield, TrendingUp, Activity, Plus } from 'lucide-react';
+import { ArrowRight, Server, Globe, Shield, TrendingUp, Activity, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useStore } from '../store/useStore';
@@ -40,8 +40,9 @@ const FEATURES = [
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { projects, setActiveProject, loadProjects } = useStore();
+  const { projects, setActiveProject, loadProjects, deleteProject } = useStore();
   const { user } = useAuth();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) loadProjects(user.id);
@@ -194,18 +195,62 @@ export function Dashboard() {
                 key={project.id}
                 hover
                 onClick={() => {
+                  if (confirmDeleteId === project.id) return;
                   setActiveProject(project.id);
                   navigate(project.currentPhase >= 2 ? '/journey' : '/discovery');
                 }}
-                className="flex items-center justify-between"
+                className="flex items-center justify-between group"
               >
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-text-primary">{project.clientName}</p>
                   <p className="text-xs text-text-muted mt-0.5 capitalize">
                     Phase {project.currentPhase} · {project.status}
                   </p>
                 </div>
-                <ArrowRight size={16} className="text-text-muted" />
+
+                <div className="flex items-center gap-2 shrink-0 ml-4">
+                  {confirmDeleteId === project.id ? (
+                    <>
+                      <span className="text-xs text-text-muted">Delete?</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteProject(project.id);
+                          setConfirmDeleteId(null);
+                        }}
+                        className="text-xs font-semibold px-2.5 py-1 rounded"
+                        style={{ color: '#f87171', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)' }}
+                      >
+                        Yes, delete
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDeleteId(null);
+                        }}
+                        className="text-xs font-medium px-2.5 py-1 rounded text-text-muted"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #1A1E28' }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDeleteId(project.id);
+                        }}
+                        className="p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: '#7A8599' }}
+                        title="Delete project"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <ArrowRight size={16} className="text-text-muted" />
+                    </>
+                  )}
+                </div>
               </Card>
             ))}
           </div>
