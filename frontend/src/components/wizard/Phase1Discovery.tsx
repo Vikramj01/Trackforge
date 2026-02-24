@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { Server, Globe, CheckCircle, AlertCircle, Info, Zap } from 'lucide-react';
+import { Server, Globe, CheckCircle, AlertCircle, Info, Zap, Pencil } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
@@ -15,7 +15,7 @@ import {
   PRIMARY_OBJECTIVE_OPTIONS,
   TECH_STACK_OPTIONS,
 } from '../../types';
-import type { ValidatorResults, PrimaryObjective, PropertyType } from '../../types';
+import type { ValidatorResults, PrimaryObjective, PropertyType, Project } from '../../types';
 
 // ─── Zod Schema ──────────────────────────────────────────────────────────────
 
@@ -643,6 +643,25 @@ function buildDefaultsFromValidator(
   };
 }
 
+// Build form defaults from a saved project's discovery data (edit mode)
+function buildDefaultsFromProject(project: Project): Partial<DiscoveryFormValues> {
+  const d = project.discovery;
+  if (!d) return {};
+  return {
+    clientName: project.clientName,
+    industry: d.industry,
+    website: d.website,
+    propertyType: d.propertyType,
+    businessModel: d.businessModel,
+    primaryObjective: d.primaryObjective,
+    techStack: d.techStack,
+    enableServerSide: d.serverSideTracking.enabled,
+    serverMethod: d.serverSideTracking.method,
+    serverEndpoint: d.serverSideTracking.serverEndpoint || '',
+    notes: d.notes || '',
+  };
+}
+
 // ─── Pre-fill Banner ──────────────────────────────────────────────────────────
 
 function ValidatorPrefillBanner({
@@ -692,21 +711,52 @@ function ValidatorPrefillBanner({
   );
 }
 
+// ─── Edit Mode Banner ─────────────────────────────────────────────────────────
+
+function EditModeBanner({ clientName }: { clientName: string }) {
+  return (
+    <div
+      className="flex items-start gap-3 p-4 rounded-lg mb-6"
+      style={{
+        background: 'rgba(124,58,237,0.06)',
+        border: '1px solid rgba(124,58,237,0.25)',
+      }}
+    >
+      <Pencil size={16} style={{ color: '#A78BFA' }} className="mt-0.5 shrink-0" />
+      <div>
+        <span className="text-sm font-semibold" style={{ color: '#A78BFA' }}>
+          Editing: {clientName}
+        </span>
+        <p className="text-xs text-text-muted mt-0.5">
+          All fields are pre-filled from saved data. Make your changes and click "Continue" or "Save Draft".
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Form ────────────────────────────────────────────────────────────────
 
 export function Phase1Discovery() {
   const navigate = useNavigate();
   const { addProject, updateProject, setActiveProject, getActiveProject, validatorResults } = useStore();
 
-  const validatorDefaults = buildDefaultsFromValidator(validatorResults);
+  // ── Determine defaults priority: project data → validator data → empty ─────
+  const existingProject = getActiveProject();
+  const isEditMode = !!(existingProject?.discovery);
 
-  // Track which fields were pre-filled so we can show them in the banner
+  const projectDefaults = isEditMode ? buildDefaultsFromProject(existingProject!) : {};
+  const validatorDefaults = isEditMode ? {} : buildDefaultsFromValidator(validatorResults);
+
+  // Track which fields were pre-filled from validator (only in new-project mode)
   const prefilledFields: string[] = [];
-  if (validatorDefaults.website) prefilledFields.push('Website URL');
-  if (validatorDefaults.propertyType) prefilledFields.push('Property Type');
-  if (validatorDefaults.primaryObjective) prefilledFields.push('Primary Objective');
-  if (validatorDefaults.techStack && validatorDefaults.techStack.length > 0)
-    prefilledFields.push('Tech Stack');
+  if (!isEditMode) {
+    if (validatorDefaults.website) prefilledFields.push('Website URL');
+    if (validatorDefaults.propertyType) prefilledFields.push('Property Type');
+    if (validatorDefaults.primaryObjective) prefilledFields.push('Primary Objective');
+    if (validatorDefaults.techStack && validatorDefaults.techStack.length > 0)
+      prefilledFields.push('Tech Stack');
+  }
 
   const [draftSaved, setDraftSaved] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -722,17 +772,17 @@ export function Phase1Discovery() {
   } = useForm<DiscoveryFormValues>({
     resolver: zodResolver(discoverySchema),
     defaultValues: {
-      clientName: '',
-      industry: '',
-      website: validatorDefaults.website ?? '',
-      propertyType: validatorDefaults.propertyType ?? undefined,
-      businessModel: undefined,
-      primaryObjective: validatorDefaults.primaryObjective ?? undefined,
-      techStack: validatorDefaults.techStack ?? [],
-      enableServerSide: true,
-      serverMethod: 'self-hosted',
-      serverEndpoint: '',
-      notes: '',
+      clientName: projectDefaults.clientName ?? '',
+      industry: projectDefaults.industry ?? '',
+      website: projectDefaults.website ?? validatorDefaults.website ?? '',
+      propertyType: projectDefaults.propertyType ?? validatorDefaults.propertyType ?? undefined,
+      businessModel: projectDefaults.businessModel ?? undefined,
+      primaryObjective: projectDefaults.primaryObjective ?? validatorDefaults.primaryObjective ?? undefined,
+      techStack: projectDefaults.techStack ?? validatorDefaults.techStack ?? [],
+      enableServerSide: projectDefaults.enableServerSide ?? true,
+      serverMethod: projectDefaults.serverMethod ?? 'self-hosted',
+      serverEndpoint: projectDefaults.serverEndpoint ?? '',
+      notes: projectDefaults.notes ?? '',
     },
   });
 
@@ -840,7 +890,7 @@ export function Phase1Discovery() {
             margin: 0,
           }}
         >
-          Phase 1 · Discovery
+          {isEditMode ? 'Edit Discovery' : 'Phase 1 · Discovery'}
         </h1>
         <p className="text-text-muted text-sm mt-1.5">
           Define client context and configure dual-tracking architecture preferences.
@@ -849,8 +899,13 @@ export function Phase1Discovery() {
 
       <PhaseStepper current={1} />
 
-      {/* Pre-fill banner — only shown when arriving from Validator */}
-      {validatorResults && prefilledFields.length > 0 && (
+      {/* Edit mode banner — shown when re-opening an existing project */}
+      {isEditMode && existingProject && (
+        <EditModeBanner clientName={existingProject.clientName} />
+      )}
+
+      {/* Validator pre-fill banner — only shown for new projects from Validator */}
+      {!isEditMode && validatorResults && prefilledFields.length > 0 && (
         <ValidatorPrefillBanner
           score={validatorResults.score}
           prefilledFields={prefilledFields}

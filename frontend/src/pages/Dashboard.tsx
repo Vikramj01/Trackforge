@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Server, Globe, Shield, TrendingUp, Activity, Plus, Trash2 } from 'lucide-react';
+import { ArrowRight, Server, Globe, Shield, TrendingUp, Activity, Plus, Trash2, Pencil } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useStore } from '../store/useStore';
@@ -37,6 +37,13 @@ const FEATURES = [
     highlight: true,
   },
 ];
+
+const PHASE_ROUTE: Record<number, string> = {
+  1: '/discovery',
+  2: '/journey',
+  3: '/orchestration',
+  4: '/export',
+};
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -197,7 +204,7 @@ export function Dashboard() {
                 onClick={() => {
                   if (confirmDeleteId === project.id) return;
                   setActiveProject(project.id);
-                  navigate(project.currentPhase >= 2 ? '/journey' : '/discovery');
+                  navigate(PHASE_ROUTE[project.currentPhase] ?? '/discovery');
                 }}
                 className="flex items-center justify-between group"
               >
@@ -205,13 +212,18 @@ export function Dashboard() {
                   <p className="text-sm font-semibold text-text-primary">{project.clientName}</p>
                   <p className="text-xs text-text-muted mt-0.5 capitalize">
                     Phase {project.currentPhase} · {project.status}
+                    {project.discovery?.website && (
+                      <span style={{ color: '#3A3F4E' }}>
+                        {' '}· {project.discovery.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                      </span>
+                    )}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 ml-4">
+                <div className="flex items-center gap-1 shrink-0 ml-4">
                   {confirmDeleteId === project.id ? (
                     <>
-                      <span className="text-xs text-text-muted">Delete?</span>
+                      <span className="text-xs text-text-muted mr-1">Delete?</span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -228,7 +240,7 @@ export function Dashboard() {
                           e.stopPropagation();
                           setConfirmDeleteId(null);
                         }}
-                        className="text-xs font-medium px-2.5 py-1 rounded text-text-muted"
+                        className="text-xs font-medium px-2.5 py-1 rounded text-text-muted ml-1"
                         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #1A1E28' }}
                       >
                         Cancel
@@ -236,6 +248,19 @@ export function Dashboard() {
                     </>
                   ) : (
                     <>
+                      {/* Edit Discovery — always goes to Phase 1 regardless of current phase */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveProject(project.id);
+                          navigate('/discovery');
+                        }}
+                        className="p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: '#7A8599' }}
+                        title="Edit Discovery settings"
+                      >
+                        <Pencil size={14} />
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -247,7 +272,7 @@ export function Dashboard() {
                       >
                         <Trash2 size={14} />
                       </button>
-                      <ArrowRight size={16} className="text-text-muted" />
+                      <ArrowRight size={16} className="text-text-muted ml-1" />
                     </>
                   )}
                 </div>
