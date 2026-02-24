@@ -2,7 +2,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { Server, Globe, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { Server, Globe, CheckCircle, AlertCircle, Info, Zap } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
@@ -14,6 +14,7 @@ import {
   PRIMARY_OBJECTIVE_OPTIONS,
   TECH_STACK_OPTIONS,
 } from '../../types';
+import type { ValidatorResults, PrimaryObjective, PropertyType } from '../../types';
 
 // ─── Zod Schema ──────────────────────────────────────────────────────────────
 
@@ -612,11 +613,99 @@ function PhaseStepper({ current }: { current: number }) {
   );
 }
 
+// ─── Validator Pre-fill ───────────────────────────────────────────────────────
+
+const CONVERSION_GOAL_TO_OBJECTIVE: Record<string, PrimaryObjective> = {
+  purchase: 'purchase',
+  lead: 'lead',
+  signup: 'subscription',
+  'add-to-cart': 'purchase',
+};
+
+function buildDefaultsFromValidator(
+  vr: ValidatorResults | null
+): Partial<DiscoveryFormValues> {
+  if (!vr) return {};
+
+  const techStack: string[] = [];
+  if (vr.detectedSetup.hasGTM) techStack.push('gtm');
+  if (vr.detectedSetup.hasGA4) techStack.push('ga4');
+  if (vr.detectedSetup.hasMetaPixel) techStack.push('meta-pixel');
+  if (vr.detectedSetup.hasGoogleAds) techStack.push('google-ads');
+  if (vr.inputs.platforms.includes('linkedin-ads')) techStack.push('linkedin');
+
+  return {
+    website: vr.inputs.landingUrl,
+    propertyType: vr.detectedSetup.propertyType as PropertyType,
+    primaryObjective: CONVERSION_GOAL_TO_OBJECTIVE[vr.inputs.conversionType],
+    techStack,
+  };
+}
+
+// ─── Pre-fill Banner ──────────────────────────────────────────────────────────
+
+function ValidatorPrefillBanner({
+  score,
+  prefilledFields,
+}: {
+  score: number;
+  prefilledFields: string[];
+}) {
+  const scoreColor =
+    score > 70 ? '#22C55E' : score > 40 ? '#F59E0B' : '#EF4444';
+
+  return (
+    <div
+      className="flex items-start gap-3 p-4 rounded-lg mb-6"
+      style={{
+        background: 'rgba(11,191,170,0.06)',
+        border: '1px solid rgba(11,191,170,0.25)',
+      }}
+    >
+      <Zap size={16} className="text-atlas-teal mt-0.5 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span className="text-sm font-semibold text-atlas-teal">
+            Pre-filled from Validator results
+          </span>
+          <span
+            className="text-xs font-bold px-2 py-0.5 rounded"
+            style={{
+              background: `${scoreColor}18`,
+              color: scoreColor,
+              border: `1px solid ${scoreColor}40`,
+            }}
+          >
+            {score}/100 score
+          </span>
+        </div>
+        <p className="text-xs text-text-muted">
+          The following fields were automatically populated from your scan:{' '}
+          <span className="text-text-primary font-medium">
+            {prefilledFields.join(', ')}
+          </span>
+          . Review and adjust as needed.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Form ────────────────────────────────────────────────────────────────
 
 export function Phase1Discovery() {
   const navigate = useNavigate();
-  const { addProject, setActiveProject } = useStore();
+  const { addProject, setActiveProject, validatorResults } = useStore();
+
+  const validatorDefaults = buildDefaultsFromValidator(validatorResults);
+
+  // Track which fields were pre-filled so we can show them in the banner
+  const prefilledFields: string[] = [];
+  if (validatorDefaults.website) prefilledFields.push('Website URL');
+  if (validatorDefaults.propertyType) prefilledFields.push('Property Type');
+  if (validatorDefaults.primaryObjective) prefilledFields.push('Primary Objective');
+  if (validatorDefaults.techStack && validatorDefaults.techStack.length > 0)
+    prefilledFields.push('Tech Stack');
 
   const {
     register,
@@ -630,11 +719,11 @@ export function Phase1Discovery() {
     defaultValues: {
       clientName: '',
       industry: '',
-      website: '',
-      propertyType: undefined,
+      website: validatorDefaults.website ?? '',
+      propertyType: validatorDefaults.propertyType ?? undefined,
       businessModel: undefined,
-      primaryObjective: undefined,
-      techStack: [],
+      primaryObjective: validatorDefaults.primaryObjective ?? undefined,
+      techStack: validatorDefaults.techStack ?? [],
       enableServerSide: true,
       serverMethod: 'self-hosted',
       serverEndpoint: '',
@@ -712,6 +801,14 @@ export function Phase1Discovery() {
       </div>
 
       <PhaseStepper current={1} />
+
+      {/* Pre-fill banner — only shown when arriving from Validator */}
+      {validatorResults && prefilledFields.length > 0 && (
+        <ValidatorPrefillBanner
+          score={validatorResults.score}
+          prefilledFields={prefilledFields}
+        />
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
