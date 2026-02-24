@@ -1,4 +1,5 @@
 import { useForm, Controller } from 'react-hook-form';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
@@ -695,7 +696,7 @@ function ValidatorPrefillBanner({
 
 export function Phase1Discovery() {
   const navigate = useNavigate();
-  const { addProject, setActiveProject, validatorResults } = useStore();
+  const { addProject, updateProject, setActiveProject, getActiveProject, validatorResults } = useStore();
 
   const validatorDefaults = buildDefaultsFromValidator(validatorResults);
 
@@ -707,12 +708,16 @@ export function Phase1Discovery() {
   if (validatorDefaults.techStack && validatorDefaults.techStack.length > 0)
     prefilledFields.push('Tech Stack');
 
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+
   const {
     register,
     handleSubmit,
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<DiscoveryFormValues>({
     resolver: zodResolver(discoverySchema),
@@ -736,42 +741,84 @@ export function Phase1Discovery() {
   const propertyType = watch('propertyType');
   const techStack = watch('techStack');
 
-  const onSubmit = async (data: DiscoveryFormValues) => {
-    const id = crypto.randomUUID();
-    const now = new Date();
+  // ── Shared helper: build DiscoveryData from current form values ────────────
+  const buildDiscovery = (data: DiscoveryFormValues) => ({
+    clientName: data.clientName || 'Draft',
+    industry: data.industry || '',
+    website: data.website || '',
+    propertyType: data.propertyType,
+    businessModel: data.businessModel,
+    primaryObjective: data.primaryObjective,
+    techStack: data.techStack || [],
+    serverSideTracking: {
+      enabled: data.enableServerSide,
+      method: data.serverMethod,
+      serverEndpoint: data.serverEndpoint || undefined,
+    },
+    notes: data.notes,
+  });
 
-    await addProject({
-      id,
-      clientName: data.clientName,
-      clientId: id,
-      currentPhase: 1,
-      status: 'draft',
-      discovery: {
-        clientName: data.clientName,
-        industry: data.industry,
-        website: data.website,
-        propertyType: data.propertyType,
-        businessModel: data.businessModel,
-        primaryObjective: data.primaryObjective,
-        techStack: data.techStack,
-        serverSideTracking: {
-          enabled: data.enableServerSide,
-          method: data.serverMethod,
-          serverEndpoint: data.serverEndpoint || undefined,
-        },
-        notes: data.notes,
-      },
-      createdAt: now,
-      updatedAt: now,
-    });
+  // ── Save Draft — no validation required ────────────────────────────────────
+  const saveDraft = async () => {
+    setIsSavingDraft(true);
+    const data = getValues();
+    const existing = getActiveProject();
 
-    setActiveProject(id);
-    navigate('/journey');
+    if (existing) {
+      await updateProject(existing.id, {
+        clientName: data.clientName || existing.clientName,
+        discovery: buildDiscovery(data),
+      });
+    } else {
+      const id = crypto.randomUUID();
+      const now = new Date();
+      await addProject({
+        id,
+        clientName: data.clientName || 'Draft',
+        clientId: id,
+        currentPhase: 1,
+        status: 'draft',
+        discovery: buildDiscovery(data),
+        createdAt: now,
+        updatedAt: now,
+      });
+      setActiveProject(id);
+    }
+
+    setIsSavingDraft(false);
+    setDraftSaved(true);
+    setTimeout(() => setDraftSaved(false), 2000);
   };
 
-  const saveDraft = handleSubmit(() => {
-    /* no-op for now — same as submit */
-  });
+  // ── Continue — requires full validation ────────────────────────────────────
+  const onSubmit = async (data: DiscoveryFormValues) => {
+    const existing = getActiveProject();
+
+    if (existing) {
+      await updateProject(existing.id, {
+        clientName: data.clientName,
+        currentPhase: 2,
+        status: 'in-progress',
+        discovery: buildDiscovery(data),
+      });
+    } else {
+      const id = crypto.randomUUID();
+      const now = new Date();
+      await addProject({
+        id,
+        clientName: data.clientName,
+        clientId: id,
+        currentPhase: 2,
+        status: 'in-progress',
+        discovery: buildDiscovery(data),
+        createdAt: now,
+        updatedAt: now,
+      });
+      setActiveProject(id);
+    }
+
+    navigate('/journey');
+  };
 
   return (
     <div className="p-8 max-w-3xl">
@@ -972,8 +1019,9 @@ export function Phase1Discovery() {
             type="button"
             variant="secondary"
             onClick={saveDraft}
+            disabled={isSavingDraft}
           >
-            Save Draft
+            {draftSaved ? '✓ Draft Saved' : isSavingDraft ? 'Saving...' : 'Save Draft'}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Continue to Journey Designer →'}
