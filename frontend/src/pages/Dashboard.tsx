@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Server, Globe, Shield, TrendingUp, Activity, Plus, Trash2, Pencil } from 'lucide-react';
+import { ArrowRight, Server, Globe, Shield, TrendingUp, Activity, Plus, Trash2, Pencil, Info } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useStore } from '../store/useStore';
@@ -23,10 +23,26 @@ function computeStats(projects: Project[]) {
   ).length;
 
   return [
-    { label: 'Active Projects',   value: active > 0 ? String(active) : '0' },
-    { label: 'Dual-Tracking Rate', value: dualRate !== null ? `${dualRate}%` : '—' },
-    { label: 'Avg Coverage Gain',  value: coverageGain ?? '—' },
-    { label: 'Exports Generated',  value: exports > 0 ? String(exports) : '0' },
+    {
+      label: 'Active Projects',
+      value: active > 0 ? String(active) : '0',
+      tooltip: 'Total tracking projects you have created in Atlas.',
+    },
+    {
+      label: 'Dual-Tracking Rate',
+      value: dualRate !== null ? `${dualRate}%` : '—',
+      tooltip: 'Percentage of your projects using both client-side (GTM) and server-side (sGTM) tracking simultaneously.',
+    },
+    {
+      label: 'Avg Coverage Gain',
+      value: coverageGain ?? '—',
+      tooltip: 'Estimated additional conversions recovered by adding server-side tracking. Server-side bypasses ad blockers and iOS ITP, typically recovering 20–40% of previously lost signals.',
+    },
+    {
+      label: 'Exports Generated',
+      value: exports > 0 ? String(exports) : '0',
+      tooltip: 'Projects with a completed tracking architecture ready for deployment.',
+    },
   ];
 }
 
@@ -67,6 +83,7 @@ export function Dashboard() {
   const { projects, setActiveProject, loadProjects, deleteProject } = useStore();
   const { user } = useAuth();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) loadProjects(user.id);
@@ -105,19 +122,46 @@ export function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {stats.map((stat) => (
           <Card key={stat.label}>
-            <p
-              style={{
-                fontFamily: 'Bricolage Grotesque, sans-serif',
-                fontWeight: 700,
-                fontSize: '28px',
-                color: '#E8ECF2',
-                lineHeight: 1,
-                margin: 0,
-              }}
-            >
-              {stat.value}
-            </p>
-            <p className="text-xs text-text-muted mt-2 font-medium">{stat.label}</p>
+            <div className="relative">
+              <p
+                style={{
+                  fontFamily: 'Bricolage Grotesque, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '28px',
+                  color: '#E8ECF2',
+                  lineHeight: 1,
+                  margin: 0,
+                }}
+              >
+                {stat.value}
+              </p>
+              <div className="flex items-center gap-1 mt-2">
+                <p className="text-xs text-text-muted font-medium">{stat.label}</p>
+                <button
+                  type="button"
+                  onMouseEnter={() => setActiveTooltip(stat.label)}
+                  onMouseLeave={() => setActiveTooltip(null)}
+                  onClick={() => setActiveTooltip(activeTooltip === stat.label ? null : stat.label)}
+                  className="shrink-0 transition-opacity hover:opacity-100 opacity-40"
+                  style={{ color: '#7A8599', lineHeight: 0 }}
+                >
+                  <Info size={12} />
+                </button>
+              </div>
+              {activeTooltip === stat.label && (
+                <div
+                  className="absolute z-10 bottom-full left-0 mb-2 p-3 rounded-lg text-xs leading-relaxed w-56"
+                  style={{
+                    background: '#1A1E28',
+                    border: '1px solid #2A2F3E',
+                    color: '#A8B2C0',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  {stat.tooltip}
+                </div>
+              )}
+            </div>
           </Card>
         ))}
       </div>
@@ -134,7 +178,7 @@ export function Dashboard() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Option 1: Test existing tracking */}
+            {/* Option 1: Run tracking audit */}
             <Card
               hover
               onClick={() => navigate('/validator')}
@@ -155,10 +199,10 @@ export function Dashboard() {
                     className="text-sm font-semibold text-text-primary mb-1"
                     style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
                   >
-                    Test My Existing Tracking
+                    Run Tracking Audit
                   </p>
                   <p className="text-xs text-text-muted leading-relaxed mb-3">
-                    Run a free audit of your current setup
+                    Scan your site to detect tracking gaps and get a fix plan
                   </p>
                   <p
                     className="text-xs font-medium"
@@ -319,8 +363,8 @@ export function Dashboard() {
                 <Activity size={16} style={{ color: '#0BBFAA' }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-text-primary">Test Existing Tracking</p>
-                <p className="text-xs text-text-muted">Run a tracking audit first</p>
+                <p className="text-sm font-semibold text-text-primary">Run Tracking Audit</p>
+                <p className="text-xs text-text-muted">Scan and fix existing tracking</p>
               </div>
               <ArrowRight size={14} className="text-text-muted shrink-0" />
             </Card>
@@ -456,14 +500,6 @@ export function Dashboard() {
               </div>
             </Card>
           ))}
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <Button variant="secondary" onClick={() => navigate('/validator')}>
-            <Activity size={16} />
-            Run Tracking Audit
-            <ArrowRight size={16} />
-          </Button>
         </div>
       </div>
     </div>

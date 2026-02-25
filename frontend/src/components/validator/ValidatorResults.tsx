@@ -33,6 +33,7 @@ export function ValidatorResults({ results, onFixAll, onRunAgain }: ValidatorRes
             {results.criticalIssues.map((issue) => (
               <IssueCard
                 key={issue.id}
+                id={issue.id}
                 severity={issue.severity as 'critical'}
                 title={issue.title}
                 impact={issue.impact}
@@ -59,6 +60,7 @@ export function ValidatorResults({ results, onFixAll, onRunAgain }: ValidatorRes
             {results.warnings.map((issue) => (
               <IssueCard
                 key={issue.id}
+                id={issue.id}
                 severity={issue.severity as 'warning'}
                 title={issue.title}
                 impact={issue.impact}
