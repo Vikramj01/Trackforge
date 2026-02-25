@@ -43,13 +43,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btn-copy')?.addEventListener('click', () => {
       const encoded = encodeURIComponent(btoa(JSON.stringify(results)));
-      navigator.clipboard.writeText(encoded).then(() => {
-        const btn = document.getElementById('btn-copy');
-        if (btn) {
-          btn.textContent = '\u2713 Copied!';
-          setTimeout(() => { btn.textContent = 'Copy results code'; }, 2000);
-        }
-      });
+
+      // navigator.clipboard can fail silently in extension popups.
+      // Use the legacy execCommand approach which works reliably here.
+      const ta = document.createElement('textarea');
+      ta.value = encoded;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+
+      const btn = document.getElementById('btn-copy');
+      if (btn) {
+        btn.textContent = '\u2713 Copied!';
+        setTimeout(() => { btn.textContent = 'Copy results code'; }, 2000);
+      }
     });
 
   } catch (err) {
