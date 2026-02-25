@@ -365,7 +365,7 @@ export function Phase0Validator() {
             },
             {
               n: '3',
-              title: 'Scan your client's site',
+              title: "Scan your client's site",
               body: (
                 <p className="text-sm text-text-muted mt-1">
                   Navigate to any landing page and click the{' '}
