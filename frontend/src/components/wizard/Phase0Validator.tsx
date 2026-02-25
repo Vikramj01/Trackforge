@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Puzzle, Bookmark, FlaskConical, ChevronRight, ArrowLeft, Copy, Check } from 'lucide-react';
+import { Puzzle, Bookmark, FlaskConical, ChevronRight, ArrowLeft, Copy, Check, Download } from 'lucide-react';
 import { ValidatorForm } from '../validator/ValidatorForm';
 import { ValidatorProgress } from '../validator/ValidatorProgress';
 import { ValidatorResults } from '../validator/ValidatorResults';
@@ -330,18 +330,26 @@ export function Phase0Validator() {
           {[
             {
               n: '1',
-              title: 'Get the extension files',
+              title: 'Download the extension',
               body: (
-                <p className="text-sm text-text-muted mt-1">
-                  The extension is in the{' '}
-                  <code
-                    className="px-1.5 py-0.5 rounded text-xs"
-                    style={{ background: '#12161E', color: '#0BBFAA', border: '1px solid #1A1E28' }}
+                <div className="mt-2">
+                  <a
+                    href="/atlas-validator-extension.zip"
+                    download="atlas-validator-extension.zip"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+                    style={{
+                      background: 'linear-gradient(135deg, #14DFC8 0%, #0BBFAA 60%, #085A50 100%)',
+                      color: '#080B12',
+                      textDecoration: 'none',
+                    }}
                   >
-                    extension/
-                  </code>{' '}
-                  folder of the Atlas repository. Clone or download the repo to your machine.
-                </p>
+                    <Download size={14} />
+                    Download atlas-validator-extension.zip
+                  </a>
+                  <p className="text-xs text-text-muted mt-2">
+                    Then unzip the file — you'll load the resulting folder in the next step.
+                  </p>
+                </div>
               ),
             },
             {
