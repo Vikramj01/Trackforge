@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     app.innerHTML = renderResults(results, tab.url);
 
     document.getElementById('btn-atlas')?.addEventListener('click', () => {
-      const encoded = encodeURIComponent(btoa(JSON.stringify(results)));
+      const encoded = encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(results))));
       const targetUrl = `${ATLAS_URL}/validator?results=${encoded}`;
       // Navigate the currently-scanned tab to Atlas.
       // Simplest and most reliable: no cross-tab search, no scripting injection.
@@ -262,7 +262,7 @@ function esc(str) {
 function renderResults(r, url) {
   var c = scoreColor(r.score);
   var shortUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  var encoded = encodeURIComponent(btoa(JSON.stringify(r)));
+  var encoded = btoa(encodeURIComponent(JSON.stringify(r)));
 
   var issueHtml = r.issues.map(function(i) {
     return '<div class="issue" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15)">'
