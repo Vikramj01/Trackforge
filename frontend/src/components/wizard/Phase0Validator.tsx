@@ -455,7 +455,54 @@ export function Phase0Validator() {
           }}
         >
           <strong style={{ color: '#0BBFAA' }}>Waiting for results —</strong>{' '}
-          Once you click "Fix All Issues in Atlas" in the extension popup, this page will automatically update with your scan.
+          Click <em>"Fix All Issues in Atlas"</em> in the extension popup, or use the manual paste option below.
+        </div>
+
+        {/* Manual paste fallback */}
+        <div className="mt-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-2">
+            Or paste results code manually
+          </p>
+          <p className="text-xs text-text-muted mb-3">
+            In the extension popup, click <strong style={{ color: '#E8ECF2' }}>Copy results code</strong>, then paste it below.
+          </p>
+          <div className="flex gap-2">
+            <input
+              id="paste-code-input"
+              type="text"
+              placeholder="Paste code here…"
+              className="flex-1 text-xs rounded-lg px-3 py-2 outline-none"
+              style={{
+                background: '#0D1017',
+                border: '1px solid #1A1E28',
+                color: '#E8ECF2',
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') document.getElementById('paste-code-btn')?.click();
+              }}
+            />
+            <button
+              id="paste-code-btn"
+              type="button"
+              className="text-xs font-semibold px-4 py-2 rounded-lg shrink-0"
+              style={{ background: '#0BBFAA', color: '#080B12' }}
+              onClick={() => {
+                const input = document.getElementById('paste-code-input') as HTMLInputElement;
+                const code = input?.value?.trim();
+                if (!code) return;
+                try {
+                  const raw = JSON.parse(atob(decodeURIComponent(code)));
+                  setValidatorResults(mapScanResults(raw));
+                  setView('results');
+                } catch {
+                  input.style.borderColor = '#EF4444';
+                  setTimeout(() => { input.style.borderColor = '#1A1E28'; }, 2000);
+                }
+              }}
+            >
+              Load
+            </button>
+          </div>
         </div>
       </div>
     );

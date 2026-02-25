@@ -41,6 +41,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       chrome.tabs.update(tab.id, { url: targetUrl });
     });
 
+    document.getElementById('btn-copy')?.addEventListener('click', () => {
+      const encoded = encodeURIComponent(btoa(JSON.stringify(results)));
+      navigator.clipboard.writeText(encoded).then(() => {
+        const btn = document.getElementById('btn-copy');
+        if (btn) {
+          btn.textContent = '\u2713 Copied!';
+          setTimeout(() => { btn.textContent = 'Copy results code'; }, 2000);
+        }
+      });
+    });
+
   } catch (err) {
     app.innerHTML = renderError('Scan failed.', err.message || 'An unexpected error occurred.');
   }
@@ -296,6 +307,7 @@ function renderResults(r, url) {
     + warnHtml
     + passingHtml
     + '<button class="btn-primary" id="btn-atlas">Fix All Issues in Atlas \u2192</button>'
+    + '<button class="btn-copy" id="btn-copy">Copy results code</button>'
     + '</div>';
 }
 
