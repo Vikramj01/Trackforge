@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Scan any page for tracking gaps — GTM, GA4, Meta Pixel, Google Ads — and send results to Atlas.",
   "permissions": ["activeTab", "scripting", "tabs"],
+  "host_permissions": ["http://localhost:5173/*"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "Atlas Tracking Validator"

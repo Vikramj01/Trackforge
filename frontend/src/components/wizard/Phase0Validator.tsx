@@ -116,7 +116,7 @@ export function Phase0Validator() {
     const encoded = params.get('results');
     if (encoded) {
       try {
-        const raw = JSON.parse(atob(encoded));
+        const raw = JSON.parse(atob(decodeURIComponent(encoded)));
         setValidatorResults(mapScanResults(raw));
         setView('results');
         window.history.replaceState({}, '', '/validator');
@@ -129,6 +129,39 @@ export function Phase0Validator() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Listen for results injected directly by the Chrome extension popup.
+  // The extension uses chrome.scripting.executeScript to dispatch a CustomEvent
+  // into this page's JS context, avoiding any tab navigation or page reload.
+  useEffect(() => {
+    if (view !== 'ext-install') return;
+
+    function applyEncoded(encoded: string) {
+      try {
+        const raw = JSON.parse(atob(decodeURIComponent(encoded)));
+        setValidatorResults(mapScanResults(raw));
+        sessionStorage.removeItem('atlas_pending_results');
+        setView('results');
+      } catch {
+        // Malformed payload — stay on waiting screen
+      }
+    }
+
+    // Safety: check sessionStorage in case the event fired before this effect ran
+    const pending = sessionStorage.getItem('atlas_pending_results');
+    if (pending) {
+      applyEncoded(pending);
+      return;
+    }
+
+    function onResultsReady(e: Event) {
+      applyEncoded((e as CustomEvent<string>).detail);
+    }
+
+    window.addEventListener('atlas-results-ready', onResultsReady);
+    return () => window.removeEventListener('atlas-results-ready', onResultsReady);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
 
   const atlasOrigin = window.location.origin;
   const bookmarkletHref = buildBookmarklet(atlasOrigin);
