@@ -109,8 +109,9 @@ export function Phase0Validator() {
   const [view, setView] = useState<View>('method');
   const [inputs, setInputs] = useState<ValidatorInputs | null>(null);
   const [copied, setCopied] = useState(false);
+  const [decodeError, setDecodeError] = useState<string | null>(null);
 
-  // Read ?results= URL param written by the extension / bookmarklet redirect
+  // Read ?results= URL param written by the extension / bookmarklet.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('results');
@@ -120,48 +121,18 @@ export function Phase0Validator() {
         setValidatorResults(mapScanResults(raw));
         setView('results');
         window.history.replaceState({}, '', '/validator');
-      } catch {
-        // Invalid payload — stay on method picker
+      } catch (e) {
+        // Show a visible error instead of silently failing.
+        setDecodeError(
+          `Failed to read scan results from URL. ${e instanceof Error ? e.message : String(e)}`
+        );
+        window.history.replaceState({}, '', '/validator');
       }
     } else if (validatorResults) {
-      // Cached results from a previous scan
       setView('results');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Listen for results injected directly by the Chrome extension popup.
-  // The extension uses chrome.scripting.executeScript to dispatch a CustomEvent
-  // into this page's JS context, avoiding any tab navigation or page reload.
-  useEffect(() => {
-    if (view !== 'ext-install') return;
-
-    function applyEncoded(encoded: string) {
-      try {
-        const raw = JSON.parse(atob(decodeURIComponent(encoded)));
-        setValidatorResults(mapScanResults(raw));
-        sessionStorage.removeItem('atlas_pending_results');
-        setView('results');
-      } catch {
-        // Malformed payload — stay on waiting screen
-      }
-    }
-
-    // Safety: check sessionStorage in case the event fired before this effect ran
-    const pending = sessionStorage.getItem('atlas_pending_results');
-    if (pending) {
-      applyEncoded(pending);
-      return;
-    }
-
-    function onResultsReady(e: Event) {
-      applyEncoded((e as CustomEvent<string>).detail);
-    }
-
-    window.addEventListener('atlas-results-ready', onResultsReady);
-    return () => window.removeEventListener('atlas-results-ready', onResultsReady);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view]);
 
   const atlasOrigin = window.location.origin;
   const bookmarkletHref = buildBookmarklet(atlasOrigin);
@@ -229,6 +200,15 @@ export function Phase0Validator() {
 
     return (
       <div className="p-8 max-w-2xl">
+        {decodeError && (
+          <div
+            className="mb-6 p-4 rounded-lg text-sm"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#FCA5A5' }}
+          >
+            <p className="font-semibold mb-1">Could not read scan results</p>
+            <p className="text-xs opacity-80">{decodeError}</p>
+          </div>
+        )}
         <div className="mb-8">
           <div className="mb-3">
             <span

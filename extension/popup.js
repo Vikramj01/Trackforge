@@ -33,40 +33,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const results = buildResults(raw, tab.url);
     app.innerHTML = renderResults(results, tab.url);
 
-    document.getElementById('btn-atlas')?.addEventListener('click', async () => {
+    document.getElementById('btn-atlas')?.addEventListener('click', () => {
       const encoded = encodeURIComponent(btoa(JSON.stringify(results)));
       const targetUrl = `${ATLAS_URL}/validator?results=${encoded}`;
-
-      try {
-        const allTabs = await chrome.tabs.query({});
-        const atlasTab = allTabs.find(function(t) {
-          return t.url && t.url.startsWith(ATLAS_URL);
-        });
-
-        if (atlasTab) {
-          // Navigate the Atlas tab to the results URL via script injection.
-          // window.location.href causes a full page reload so React reads
-          // the ?results= param on mount — no CustomEvent or state needed.
-          try {
-            await chrome.scripting.executeScript({
-              target: { tabId: atlasTab.id },
-              world: 'MAIN',
-              func: function(url) { window.location.href = url; },
-              args: [targetUrl],
-            });
-          } catch (_scriptErr) {
-            // host_permissions don't cover this URL — fall back to tabs API.
-            await chrome.tabs.update(atlasTab.id, { url: targetUrl });
-          }
-          chrome.tabs.update(atlasTab.id, { active: true });
-          chrome.windows.update(atlasTab.windowId, { focused: true });
-        } else {
-          // No existing Atlas tab — open a new one.
-          chrome.tabs.create({ url: targetUrl });
-        }
-      } catch (_err) {
-        chrome.tabs.create({ url: targetUrl });
-      }
+      // Navigate the currently-scanned tab to Atlas.
+      // Simplest and most reliable: no cross-tab search, no scripting injection.
+      chrome.tabs.update(tab.id, { url: targetUrl });
     });
 
   } catch (err) {
