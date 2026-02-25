@@ -33,21 +33,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     const results = buildResults(raw, tab.url);
     app.innerHTML = renderResults(results, tab.url);
 
-    document.getElementById('btn-atlas')?.addEventListener('click', () => {
-      const encoded = btoa(JSON.stringify(results));
+    document.getElementById('btn-atlas')?.addEventListener('click', async () => {
+      const encoded = encodeURIComponent(btoa(JSON.stringify(results)));
       const targetUrl = `${ATLAS_URL}/validator?results=${encoded}`;
-      // Navigate an existing Atlas tab if one is open; otherwise open a new tab.
-      chrome.tabs.query({}, function(allTabs) {
+
+      try {
+        const allTabs = await chrome.tabs.query({});
         const atlasTab = allTabs.find(function(t) {
           return t.url && t.url.startsWith(ATLAS_URL);
         });
+
         if (atlasTab) {
-          chrome.tabs.update(atlasTab.id, { url: targetUrl, active: true });
+          // Atlas is already open — inject results directly into the page
+          // so it updates instantly without a reload or URL navigation.
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: atlasTab.id },
+              world: 'MAIN',
+              func: function(enc) {
+                sessionStorage.setItem('atlas_pending_results', enc);
+                window.dispatchEvent(new CustomEvent('atlas-results-ready', { detail: enc }));
+              },
+              args: [encoded],
+            });
+          } catch (_scriptErr) {
+            // Scripting injection failed (host not covered by host_permissions).
+            // Fall back: navigate the tab to Atlas with results in the URL.
+            await chrome.tabs.update(atlasTab.id, { url: targetUrl });
+          }
+          // Bring the Atlas tab into view.
+          chrome.tabs.update(atlasTab.id, { active: true });
           chrome.windows.update(atlasTab.windowId, { focused: true });
         } else {
+          // No Atlas tab open — open a new one with results in the URL.
           chrome.tabs.create({ url: targetUrl });
         }
-      });
+      } catch (_err) {
+        // Last-resort fallback.
+        chrome.tabs.create({ url: targetUrl });
+      }
     });
 
   } catch (err) {
