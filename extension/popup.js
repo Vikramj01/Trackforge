@@ -41,24 +41,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       chrome.tabs.update(tab.id, { url: targetUrl });
     });
 
+    document.getElementById('result-code')?.addEventListener('click', function() {
+      this.select();
+    });
+
     document.getElementById('btn-copy')?.addEventListener('click', () => {
-      const encoded = encodeURIComponent(btoa(JSON.stringify(results)));
-
-      // navigator.clipboard can fail silently in extension popups.
-      // Use the legacy execCommand approach which works reliably here.
-      const ta = document.createElement('textarea');
-      ta.value = encoded;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-
+      const input = document.getElementById('result-code');
+      if (input) {
+        input.select();
+        document.execCommand('copy');
+      }
       const btn = document.getElementById('btn-copy');
       if (btn) {
-        btn.textContent = '\u2713 Copied!';
-        setTimeout(() => { btn.textContent = 'Copy results code'; }, 2000);
+        btn.textContent = '\u2713';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
       }
     });
 
@@ -266,6 +262,7 @@ function esc(str) {
 function renderResults(r, url) {
   var c = scoreColor(r.score);
   var shortUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  var encoded = encodeURIComponent(btoa(JSON.stringify(r)));
 
   var issueHtml = r.issues.map(function(i) {
     return '<div class="issue" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15)">'
@@ -317,7 +314,13 @@ function renderResults(r, url) {
     + warnHtml
     + passingHtml
     + '<button class="btn-primary" id="btn-atlas">Fix All Issues in Atlas \u2192</button>'
-    + '<button class="btn-copy" id="btn-copy">Copy results code</button>'
+    + '<div class="code-section">'
+    +   '<p class="code-label">Paste this code in Atlas instead:</p>'
+    +   '<div class="code-row">'
+    +     '<input id="result-code" class="code-input" type="text" readonly value="' + esc(encoded) + '" />'
+    +     '<button class="btn-copy" id="btn-copy">Copy</button>'
+    +   '</div>'
+    + '</div>'
     + '</div>';
 }
 
