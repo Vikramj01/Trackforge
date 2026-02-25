@@ -44,32 +44,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         if (atlasTab) {
-          // Atlas is already open — inject results directly into the page
-          // so it updates instantly without a reload or URL navigation.
+          // Navigate the Atlas tab to the results URL via script injection.
+          // window.location.href causes a full page reload so React reads
+          // the ?results= param on mount — no CustomEvent or state needed.
           try {
             await chrome.scripting.executeScript({
               target: { tabId: atlasTab.id },
               world: 'MAIN',
-              func: function(enc) {
-                sessionStorage.setItem('atlas_pending_results', enc);
-                window.dispatchEvent(new CustomEvent('atlas-results-ready', { detail: enc }));
-              },
-              args: [encoded],
+              func: function(url) { window.location.href = url; },
+              args: [targetUrl],
             });
           } catch (_scriptErr) {
-            // Scripting injection failed (host not covered by host_permissions).
-            // Fall back: navigate the tab to Atlas with results in the URL.
+            // host_permissions don't cover this URL — fall back to tabs API.
             await chrome.tabs.update(atlasTab.id, { url: targetUrl });
           }
-          // Bring the Atlas tab into view.
           chrome.tabs.update(atlasTab.id, { active: true });
           chrome.windows.update(atlasTab.windowId, { focused: true });
         } else {
-          // No Atlas tab open — open a new one with results in the URL.
+          // No existing Atlas tab — open a new one.
           chrome.tabs.create({ url: targetUrl });
         }
       } catch (_err) {
-        // Last-resort fallback.
         chrome.tabs.create({ url: targetUrl });
       }
     });
