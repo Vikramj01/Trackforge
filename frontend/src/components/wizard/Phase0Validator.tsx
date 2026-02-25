@@ -280,6 +280,35 @@ export function Phase0Validator() {
           ))}
         </div>
 
+        {/* What happens next */}
+        <div className="mt-6 p-4 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid #1A1E28' }}>
+          <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">
+            What happens next
+          </p>
+          <div className="flex items-start gap-0">
+            {[
+              { step: '1', label: 'Choose a scan method above' },
+              { step: '2', label: 'Scan your page — takes ~5 seconds' },
+              { step: '3', label: 'Review your results with issue explanations' },
+              { step: '4', label: 'Fix issues guided by Atlas' },
+            ].map((s, i, arr) => (
+              <div key={s.step} className="flex-1 flex flex-col items-center text-center">
+                <div className="flex items-center w-full mb-2">
+                  {i > 0 && <div className="flex-1 h-px" style={{ background: '#1A1E28' }} />}
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                    style={{ background: 'rgba(11,191,170,0.1)', border: '1px solid rgba(11,191,170,0.25)', color: '#0BBFAA' }}
+                  >
+                    {s.step}
+                  </div>
+                  {i < arr.length - 1 && <div className="flex-1 h-px" style={{ background: '#1A1E28' }} />}
+                </div>
+                <p className="text-[10px] text-text-muted leading-tight px-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={() => navigate('/discovery')}

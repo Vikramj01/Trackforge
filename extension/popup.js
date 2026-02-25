@@ -35,7 +35,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btn-atlas')?.addEventListener('click', () => {
       const encoded = btoa(JSON.stringify(results));
-      chrome.tabs.create({ url: `${ATLAS_URL}/validator?results=${encoded}` });
+      const targetUrl = `${ATLAS_URL}/validator?results=${encoded}`;
+      // Navigate an existing Atlas tab if one is open; otherwise open a new tab.
+      chrome.tabs.query({}, function(allTabs) {
+        const atlasTab = allTabs.find(function(t) {
+          return t.url && t.url.startsWith(ATLAS_URL);
+        });
+        if (atlasTab) {
+          chrome.tabs.update(atlasTab.id, { url: targetUrl, active: true });
+          chrome.windows.update(atlasTab.windowId, { focused: true });
+        } else {
+          chrome.tabs.create({ url: targetUrl });
+        }
+      });
     });
 
   } catch (err) {
