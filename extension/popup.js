@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     app.innerHTML = renderResults(results, tab.url);
 
     document.getElementById('btn-atlas')?.addEventListener('click', () => {
-      const encoded = btoa(JSON.stringify(results));
+      const encoded = encodeURIComponent(btoa(JSON.stringify(results)));
       const targetUrl = `${ATLAS_URL}/validator?results=${encoded}`;
       // Navigate an existing Atlas tab if one is open; otherwise open a new tab.
       chrome.tabs.query({}, function(allTabs) {
