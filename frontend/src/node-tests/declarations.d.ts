@@ -20,6 +20,7 @@ interface StrictAssert {
   deepStrictEqual(actual: unknown, expected: unknown, message?: string): void
   strictEqual(actual: unknown, expected: unknown, message?: string): void
   throws(fn: () => void, message?: string): void
+  doesNotThrow(fn: () => void, message?: string): void
 }
 
 declare module 'node:assert/strict' {
