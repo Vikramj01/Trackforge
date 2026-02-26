@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { Project } from '../../types';
+import { generateServerGTMContainer } from '../../data/serverGTMGenerator';
 
 // ─── GTM Container Generator ─────────────────────────────────────────────────
 
@@ -916,13 +917,14 @@ ${
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
-type TabId = 'overview' | 'gtm' | 'datalayer' | 'server' | 'guide' | 'qa';
+type TabId = 'overview' | 'gtm' | 'sgtm' | 'datalayer' | 'server' | 'guide' | 'qa';
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <Package size={15} /> },
   { id: 'gtm', label: 'GTM Export', icon: <Tag size={15} /> },
+  { id: 'sgtm', label: 'Server GTM', icon: <Server size={15} /> },
   { id: 'datalayer', label: 'Data Layer Spec', icon: <Layers size={15} /> },
-  { id: 'server', label: 'Server Code', icon: <Server size={15} /> },
+  { id: 'server', label: 'Server Code', icon: <Terminal size={15} /> },
   { id: 'guide', label: 'Deploy Guide', icon: <BookOpen size={15} /> },
   { id: 'qa', label: 'QA Checklist', icon: <ClipboardList size={15} /> },
 ];
@@ -1079,6 +1081,14 @@ function OverviewTab({
       icon: <Tag size={18} color="#0BBFAA" />,
       label: 'GTM Container Export',
       desc: `${conversions.length} conversion tag${conversions.length !== 1 ? 's' : ''} (GA4${hasMeta ? ', Meta Pixel' : ''}${hasGAds ? ', Google Ads' : ''})`,
+    },
+    {
+      id: 'sgtm' as TabId,
+      icon: <Server size={18} color={serverEnabled ? '#0BBFAA' : '#7A8599'} />,
+      label: 'Server-Side GTM Container',
+      desc: serverEnabled
+        ? `GA4 MP${hasMeta ? ', Meta CAPI' : ''}${hasGAds ? ', Google Ads Enhanced' : ''} — ${dualTracked} dual-tracked conversion${dualTracked !== 1 ? 's' : ''}`
+        : 'Not configured — server-side tracking disabled',
     },
     {
       id: 'datalayer' as TabId,
@@ -1347,6 +1357,7 @@ export function Phase4Export() {
   const serverEnabled = project.discovery?.serverSideTracking?.enabled ?? false;
 
   const gtmJSON = generateGTMContainer(project);
+  const serverGTMJSON = generateServerGTMContainer(project);
   const dlSpec = generateDataLayerSpec(project);
   const serverCode = generateServerCode(project);
   const pythonCode = generatePythonServerCode(project);
@@ -1472,7 +1483,8 @@ export function Phase4Export() {
       >
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
-          const disabled = tab.id === 'server' && !serverEnabled;
+          const disabled =
+            (tab.id === 'server' || tab.id === 'sgtm') && !serverEnabled;
           return (
             <button
               key={tab.id}
@@ -1496,7 +1508,7 @@ export function Phase4Export() {
             >
               {tab.icon}
               {tab.label}
-              {tab.id === 'server' && !serverEnabled && (
+              {(tab.id === 'server' || tab.id === 'sgtm') && !serverEnabled && (
                 <span
                   style={{
                     fontSize: '10px',
@@ -1571,6 +1583,69 @@ export function Phase4Export() {
             onDownload={handleDownload}
 
           />
+        </div>
+      )}
+
+      {activeTab === 'sgtm' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {serverEnabled ? (
+            <>
+              <div
+                style={{
+                  padding: '14px 16px',
+                  background: 'rgba(11,191,170,0.06)',
+                  border: '1px solid rgba(11,191,170,0.2)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  gap: '10px',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <Server size={16} color="#0BBFAA" style={{ flexShrink: 0, marginTop: '1px' }} />
+                <div style={{ fontSize: '13px', color: '#B0C4D8', lineHeight: '1.5' }}>
+                  Import this JSON into your{' '}
+                  <strong style={{ color: '#E8ECF2' }}>Server-Side GTM container</strong> via{' '}
+                  <strong style={{ color: '#E8ECF2' }}>Admin → Import Container</strong>. After
+                  importing, replace{' '}
+                  <code style={{ fontFamily: 'JetBrains Mono, monospace', background: '#1A1E28', padding: '1px 5px', borderRadius: '3px', fontSize: '12px' }}>
+                    G-XXXXXXXXXX
+                  </code>{' '}
+                  and{' '}
+                  <code style={{ fontFamily: 'JetBrains Mono, monospace', background: '#1A1E28', padding: '1px 5px', borderRadius: '3px', fontSize: '12px' }}>
+                    AW-XXXXXXXXXX
+                  </code>{' '}
+                  with real values, and add your API secrets/access tokens to the Constant variables.
+                </div>
+              </div>
+              <CodeArtifact
+                content={serverGTMJSON}
+                filename={`atlas-gtm-server-${slug}.json`}
+                mimeType="application/json"
+                copyKey="sgtm"
+                copied={copied}
+                onCopy={handleCopy}
+                onDownload={handleDownload}
+              />
+            </>
+          ) : (
+            <div
+              style={{
+                padding: '32px',
+                background: '#0D1117',
+                border: '1px solid #1A1E28',
+                borderRadius: '10px',
+                textAlign: 'center',
+              }}
+            >
+              <Server size={36} color="#3D4559" style={{ margin: '0 auto 12px' }} />
+              <div style={{ color: '#7A8599', fontSize: '14px' }}>
+                Server-side tracking is not enabled for this project.
+              </div>
+              <div style={{ color: '#3D4559', fontSize: '12px', marginTop: '6px' }}>
+                Return to Phase 1 — Discovery to enable it.
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1813,6 +1888,7 @@ export function Phase4Export() {
               handleDownload(gtmJSON, `atlas-gtm-${slug}.json`, 'application/json');
               handleDownload(dlSpec, `atlas-datalayer-spec-${slug}.md`, 'text/markdown');
               if (serverEnabled) {
+                handleDownload(serverGTMJSON, `atlas-gtm-server-${slug}.json`, 'application/json');
                 handleDownload(serverCode, `atlas-server-${slug}.js`, 'text/javascript');
                 handleDownload(pythonCode, `atlas-server-${slug}.py`, 'text/x-python');
               }
@@ -1834,7 +1910,7 @@ export function Phase4Export() {
             }}
           >
             <Download size={15} />
-            Download All ({serverEnabled ? '6' : '4'} files)
+            Download All ({serverEnabled ? '7' : '4'} files)
           </button>
 
           <button
