@@ -11,11 +11,20 @@ import {
   Shield,
   Info,
   Target,
+  ShieldAlert,
+  Wrench,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { useStore } from '../../store/useStore';
-import type { Conversion, TrackingMethod, ValueLogic } from '../../types';
+import { getMappedIssues } from '../../data/validatorIssueMap';
+import {
+  isPhase3IssueResolved,
+  ACTIONABLE_PHASE3_ISSUES,
+  PHASE3_ACTION_HINT,
+} from '../../data/phase3Resolution';
+import type { Conversion, TrackingMethod, ValueLogic, ValidatorIssue } from '../../types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -889,6 +898,170 @@ function ValidationPanel({ conversions }: { conversions: Conversion[] }) {
   );
 }
 
+// ─── Tracking Gaps Panel (Phase 3) ───────────────────────────────────────────
+
+interface TrackingGapsPanelProps {
+  scanIssues: ValidatorIssue[];
+  scanScore: number;
+  conversions: Conversion[];
+}
+
+function TrackingGapsPanel({ scanIssues, scanScore, conversions }: TrackingGapsPanelProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  const phase3Issues = getMappedIssues(scanIssues.map((i) => i.id)).filter(
+    (m) => m.fixPhase === 3,
+  );
+
+  if (phase3Issues.length === 0) return null;
+
+  const actionable = phase3Issues.filter((m) => ACTIONABLE_PHASE3_ISSUES.has(m.issueId));
+  const external = phase3Issues.filter((m) => !ACTIONABLE_PHASE3_ISSUES.has(m.issueId));
+  const resolvedCount = actionable.filter((m) =>
+    isPhase3IssueResolved(m.issueId, conversions),
+  ).length;
+  const allActionableResolved = actionable.length > 0 && resolvedCount === actionable.length;
+
+  const scoreColor = scanScore > 70 ? '#22C55E' : scanScore > 40 ? '#F59E0B' : '#EF4444';
+
+  return (
+    <div
+      className="rounded-xl border mb-5 overflow-hidden"
+      style={{ background: 'rgba(239,68,68,0.03)', borderColor: 'rgba(239,68,68,0.2)' }}
+    >
+      {/* Header */}
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        className="w-full flex items-center gap-3 px-4 py-3 text-left"
+        style={{ borderBottom: collapsed ? 'none' : '1px solid rgba(239,68,68,0.15)' }}
+      >
+        <ShieldAlert size={16} style={{ color: '#EF4444' }} className="shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold" style={{ color: '#FCA5A5' }}>
+              Tracking Gaps from Validator Scan
+            </span>
+            <span
+              className="text-xs font-bold px-2 py-0.5 rounded"
+              style={{
+                background: `${scoreColor}18`,
+                color: scoreColor,
+                border: `1px solid ${scoreColor}40`,
+              }}
+            >
+              Score: {scanScore}/100
+            </span>
+            {allActionableResolved && (
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded"
+                style={{
+                  background: 'rgba(11,191,170,0.12)',
+                  color: '#0BBFAA',
+                  border: '1px solid rgba(11,191,170,0.3)',
+                }}
+              >
+                All configurable gaps resolved ✓
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-text-muted mt-0.5">
+            {actionable.length > 0
+              ? `${resolvedCount}/${actionable.length} configurable gap${actionable.length !== 1 ? 's' : ''} resolved · ${external.length} external task${external.length !== 1 ? 's' : ''}`
+              : `${external.length} external task${external.length !== 1 ? 's' : ''} — complete outside Atlas`}
+          </p>
+        </div>
+        <ChevronDown
+          size={16}
+          className="shrink-0 text-text-muted transition-transform"
+          style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+
+      {!collapsed && (
+        <div className="p-4 space-y-2">
+          {/* Actionable issues (configurable inside Phase 3) */}
+          {actionable.map((issue) => {
+            const resolved = isPhase3IssueResolved(issue.issueId, conversions);
+            return (
+              <div
+                key={issue.issueId}
+                className="flex items-start gap-3 p-3 rounded-lg border"
+                style={{
+                  background: resolved ? 'rgba(11,191,170,0.04)' : 'rgba(239,68,68,0.04)',
+                  borderColor: resolved ? 'rgba(11,191,170,0.2)' : 'rgba(239,68,68,0.15)',
+                }}
+              >
+                {resolved ? (
+                  <CheckCircle size={15} className="shrink-0 mt-0.5" style={{ color: '#0BBFAA' }} />
+                ) : (
+                  <AlertCircle size={15} className="shrink-0 mt-0.5" style={{ color: '#EF4444' }} />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: resolved ? '#0BBFAA' : '#FCA5A5' }}
+                    >
+                      {issue.title}
+                    </span>
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded font-medium"
+                      style={{
+                        background: 'rgba(11,191,170,0.08)',
+                        color: '#0BBFAA',
+                        border: '1px solid rgba(11,191,170,0.2)',
+                      }}
+                    >
+                      Fix here
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-0.5">{issue.fixSummary}</p>
+                  {resolved ? (
+                    <p className="text-xs mt-1 font-medium" style={{ color: '#0BBFAA' }}>
+                      ✓ Configured in your conversion settings
+                    </p>
+                  ) : (
+                    <p className="text-xs mt-1" style={{ color: '#7A8599' }}>
+                      ↓ {PHASE3_ACTION_HINT[issue.issueId]}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* External / informational tasks */}
+          {external.length > 0 && (
+            <div
+              className="p-3 rounded-lg border"
+              style={{ background: 'rgba(122,133,153,0.04)', borderColor: '#1A1E28' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Wrench size={13} className="text-text-muted shrink-0" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-text-muted">
+                  External tasks — complete outside Atlas
+                </span>
+              </div>
+              <ul className="space-y-1.5">
+                {external.map((issue) => (
+                  <li key={issue.issueId} className="flex items-start gap-2 text-xs">
+                    <ExternalLink size={11} className="shrink-0 mt-0.5 text-text-muted" />
+                    <span>
+                      <span className="text-text-primary font-medium">{issue.title}</span>
+                      <span className="text-text-muted"> — {issue.fixSummary}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function Phase3ConversionOrchestration() {
@@ -1005,6 +1178,18 @@ export function Phase3ConversionOrchestration() {
       </div>
 
       <PhaseStepper current={3} />
+
+      {/* Tracking Gaps Panel — only when a validator scan exists */}
+      {project?.discovery?.validatorScan && (
+        <TrackingGapsPanel
+          scanScore={project.discovery.validatorScan.score}
+          scanIssues={[
+            ...project.discovery.validatorScan.criticalIssues,
+            ...project.discovery.validatorScan.warnings,
+          ]}
+          conversions={conversions}
+        />
+      )}
 
       {/* No conversions state */}
       {conversionEvents.length === 0 ? (
