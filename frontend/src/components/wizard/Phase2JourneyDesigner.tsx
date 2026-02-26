@@ -10,11 +10,15 @@ import {
   ChevronRight,
   Info,
   Map,
+  ShieldAlert,
+  ChevronDown,
+  Wrench,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { useStore } from '../../store/useStore';
 import { JOURNEY_TEMPLATES, getDefaultJourneysForBusinessModel } from '../../data/journeyTemplates';
+import { getMappedIssues } from '../../data/validatorIssueMap';
 import type { Journey, JourneyEvent, EventParameter, EventType, EventCategory, ConversionType } from '../../types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -766,6 +770,224 @@ function ValidationPanel({ journeys }: { journeys: Journey[] }) {
   );
 }
 
+// ─── Tracking Gaps Panel ──────────────────────────────────────────────────────
+
+interface TrackingGapsPanelProps {
+  scanIssues: Array<{ id: string; title: string; severity: 'critical' | 'warning' }>;
+  scanScore: number;
+  journeys: Journey[];
+  onAddEvent: (journeyId: string, event: JourneyEvent) => void;
+  journeyIds: Array<{ id: string; name: string }>;
+}
+
+function TrackingGapsPanel({
+  scanIssues,
+  scanScore,
+  journeys,
+  onAddEvent,
+  journeyIds,
+}: TrackingGapsPanelProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  const allIssueIds = scanIssues.map((i) => i.id);
+  const mappedIssues = getMappedIssues(allIssueIds);
+
+  // Also include unmapped issues as informational
+  const unmappedIssues = scanIssues.filter(
+    (i) => !mappedIssues.find((m) => m.issueId === i.id),
+  );
+
+  const phase2Issues = mappedIssues.filter((m) => m.fixPhase === 2);
+  const phase3Issues = mappedIssues.filter((m) => m.fixPhase === 3);
+
+  const resolved = phase2Issues.filter((m) => m.isResolved(journeys));
+  const unresolved = phase2Issues.filter((m) => !m.isResolved(journeys));
+
+  const scoreColor = scanScore > 70 ? '#22C55E' : scanScore > 40 ? '#F59E0B' : '#EF4444';
+
+  if (mappedIssues.length === 0 && unmappedIssues.length === 0) return null;
+
+  return (
+    <div
+      className="rounded-xl border mb-6 overflow-hidden"
+      style={{ background: 'rgba(239,68,68,0.03)', borderColor: 'rgba(239,68,68,0.2)' }}
+    >
+      {/* Header */}
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        className="w-full flex items-center gap-3 px-4 py-3 text-left"
+        style={{ borderBottom: collapsed ? 'none' : '1px solid rgba(239,68,68,0.15)' }}
+      >
+        <ShieldAlert size={16} style={{ color: '#EF4444' }} className="shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold" style={{ color: '#FCA5A5' }}>
+              Tracking Gaps from Validator Scan
+            </span>
+            <span
+              className="text-xs font-bold px-2 py-0.5 rounded"
+              style={{ background: `${scoreColor}18`, color: scoreColor, border: `1px solid ${scoreColor}40` }}
+            >
+              Score: {scanScore}/100
+            </span>
+            {unresolved.length === 0 && phase2Issues.length > 0 && (
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded"
+                style={{ background: 'rgba(11,191,170,0.12)', color: '#0BBFAA', border: '1px solid rgba(11,191,170,0.3)' }}
+              >
+                All Phase 2 gaps fixed ✓
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-text-muted mt-0.5">
+            {unresolved.length > 0
+              ? `${unresolved.length} issue${unresolved.length !== 1 ? 's' : ''} need${unresolved.length === 1 ? 's' : ''} a journey event to resolve`
+              : 'Remaining issues are addressed in Phase 3 (Orchestration)'}
+          </p>
+        </div>
+        <ChevronDown
+          size={16}
+          className="shrink-0 text-text-muted transition-transform"
+          style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+
+      {!collapsed && (
+        <div className="p-4 space-y-2">
+          {/* Phase 2 fixable issues */}
+          {phase2Issues.map((issue) => {
+            const isResolved = issue.isResolved(journeys);
+            const hasTemplate = !!issue.eventTemplate;
+
+            return (
+              <div
+                key={issue.issueId}
+                className="flex items-start gap-3 p-3 rounded-lg border"
+                style={{
+                  background: isResolved ? 'rgba(11,191,170,0.04)' : 'rgba(239,68,68,0.04)',
+                  borderColor: isResolved ? 'rgba(11,191,170,0.2)' : 'rgba(239,68,68,0.15)',
+                }}
+              >
+                {isResolved ? (
+                  <CheckCircle size={15} className="shrink-0 mt-0.5" style={{ color: '#0BBFAA' }} />
+                ) : (
+                  <AlertCircle size={15} className="shrink-0 mt-0.5" style={{ color: '#EF4444' }} />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: isResolved ? '#0BBFAA' : '#FCA5A5' }}
+                    >
+                      {issue.title}
+                    </span>
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded font-medium"
+                      style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.2)' }}
+                    >
+                      Fix in Phase 2
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-0.5">{issue.fixSummary}</p>
+                  {isResolved && (
+                    <p className="text-xs mt-1 font-medium" style={{ color: '#0BBFAA' }}>
+                      ✓ Resolved — event found in your journeys
+                    </p>
+                  )}
+                </div>
+                {!isResolved && hasTemplate && journeyIds.length > 0 && (
+                  <div className="shrink-0">
+                    {journeyIds.length === 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const event = issue.eventTemplate!();
+                          onAddEvent(journeyIds[0].id, event);
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+                        style={{
+                          background: 'rgba(11,191,170,0.1)',
+                          color: '#0BBFAA',
+                          border: '1px solid rgba(11,191,170,0.3)',
+                        }}
+                      >
+                        <Plus size={12} />
+                        Add Event
+                      </button>
+                    ) : (
+                      <select
+                        className="text-xs rounded-lg px-2 py-1.5 appearance-none cursor-pointer"
+                        style={{
+                          background: 'rgba(11,191,170,0.1)',
+                          color: '#0BBFAA',
+                          border: '1px solid rgba(11,191,170,0.3)',
+                        }}
+                        defaultValue=""
+                        onChange={(e) => {
+                          if (!e.target.value) return;
+                          const event = issue.eventTemplate!();
+                          onAddEvent(e.target.value, event);
+                          e.target.value = '';
+                        }}
+                      >
+                        <option value="">+ Add to journey…</option>
+                        {journeyIds.map((j) => (
+                          <option key={j.id} value={j.id}>{j.name}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+                {!isResolved && !hasTemplate && (
+                  <span
+                    className="text-xs px-2 py-1 rounded shrink-0"
+                    style={{ background: 'rgba(245,158,11,0.08)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}
+                  >
+                    Add param manually
+                  </span>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Phase 3 issues */}
+          {(phase3Issues.length > 0 || unmappedIssues.length > 0) && (
+            <div
+              className="p-3 rounded-lg border mt-2"
+              style={{ background: 'rgba(122,133,153,0.04)', borderColor: '#1A1E28' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Wrench size={13} className="text-text-muted shrink-0" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-text-muted">
+                  Addressed in Phase 3 (Orchestration)
+                </span>
+              </div>
+              <ul className="space-y-1">
+                {phase3Issues.map((issue) => (
+                  <li key={issue.issueId} className="flex items-start gap-2 text-xs text-text-muted">
+                    <ChevronRight size={12} className="shrink-0 mt-0.5" />
+                    <span>
+                      <span className="text-text-primary font-medium">{issue.title}</span>
+                      {' — '}{issue.fixSummary}
+                    </span>
+                  </li>
+                ))}
+                {unmappedIssues.map((issue) => (
+                  <li key={issue.issueId} className="flex items-start gap-2 text-xs text-text-muted">
+                    <ChevronRight size={12} className="shrink-0 mt-0.5" />
+                    <span className="text-text-primary font-medium">{issue.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function Phase2JourneyDesigner() {
@@ -813,6 +1035,12 @@ export function Phase2JourneyDesigner() {
       { id: crypto.randomUUID(), name: 'Custom Journey', description: '', events: [] },
     ]);
     setShowTemplateChooser(false);
+  }
+
+  function injectEvent(journeyId: string, event: JourneyEvent) {
+    setJourneys((prev) =>
+      prev.map((j) => (j.id === journeyId ? { ...j, events: [...j.events, event] } : j)),
+    );
   }
 
   function deleteJourney(journeyId: string) {
@@ -932,6 +1160,20 @@ export function Phase2JourneyDesigner() {
       </div>
 
       <PhaseStepper current={2} />
+
+      {/* Tracking Gaps Panel — only shown when a validator scan was run */}
+      {project?.discovery?.validatorScan && (
+        <TrackingGapsPanel
+          scanScore={project.discovery.validatorScan.score}
+          scanIssues={[
+            ...project.discovery.validatorScan.criticalIssues,
+            ...project.discovery.validatorScan.warnings,
+          ]}
+          journeys={journeys}
+          onAddEvent={injectEvent}
+          journeyIds={journeys.map((j) => ({ id: j.id, name: j.name }))}
+        />
+      )}
 
       {/* Context info banner */}
       {project?.discovery?.businessModel && journeys.length > 0 && (

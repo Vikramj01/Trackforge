@@ -806,6 +806,8 @@ export function Phase1Discovery() {
       serverEndpoint: data.serverEndpoint || undefined,
     },
     notes: data.notes,
+    // Persist the validator scan so Phase 2 can use it to surface tracking gaps
+    ...(validatorResults && !isEditMode ? { validatorScan: validatorResults } : {}),
   });
 
   // ── Save Draft — no validation required ────────────────────────────────────

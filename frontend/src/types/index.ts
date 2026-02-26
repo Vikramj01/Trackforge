@@ -55,6 +55,7 @@ export interface DiscoveryData {
   techStack: string[];
   serverSideTracking: ServerSideConfig;
   notes?: string;
+  validatorScan?: ValidatorResults;
 }
 
 // ─── Client / Project ────────────────────────────────────────────────────────
